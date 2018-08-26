@@ -617,6 +617,17 @@ namespace OpenTween.Api
             return this.apiConnection.GetAsync<TwitterIds>(endpoint, param, "/followers/ids");
         }
 
+        public Task<TwitterIds> FriendsIds(long? cursor = null)
+        {
+            var endpoint = new Uri("friends/ids.json", UriKind.Relative);
+            var param = new Dictionary<string, string>();
+
+            if (cursor != null)
+                param["cursor"] = cursor.ToString();
+
+            return this.apiConnection.GetAsync<TwitterIds>(endpoint, param, "/friends/ids");
+        }
+
         public Task<TwitterIds> MutesUsersIds(long? cursor = null)
         {
             var endpoint = new Uri("mutes/users/ids.json", UriKind.Relative);
@@ -815,6 +826,23 @@ namespace OpenTween.Api
 
             if (!string.IsNullOrEmpty(replies))
                 param["replies"] = replies;
+            if (!string.IsNullOrEmpty(track))
+                param["track"] = track;
+
+            Task<Stream> openStream()
+                => this.apiConnection.GetStreamingStreamAsync(endpoint, param);
+
+            return new TwitterStreamObservable(openStream);
+        }
+
+        public TwitterStreamObservable Stream(long[] ids = null, string track = null)
+        {
+            var endpoint = new Uri("https://stream.twitter.com/1.1/statuses/filter.json");
+            var param = new Dictionary<string, string>();
+
+            param["follow"] = CurrentUserId.ToString();
+            if (ids != null && ids.Length > 0)
+                param["follow"] += "," + string.Join(",", ids);
             if (!string.IsNullOrEmpty(track))
                 param["track"] = track;
 

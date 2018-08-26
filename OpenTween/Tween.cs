@@ -1305,21 +1305,21 @@ namespace OpenTween
             if (ResetTimers.Timeline || homeCounter <= 0 && SettingManager.Common.TimelinePeriod > 0)
             {
                 Interlocked.Exchange(ref homeCounter, SettingManager.Common.TimelinePeriod);
-                if (!tw.IsUserstreamDataReceived && !ResetTimers.Timeline)
+                if (!ResetTimers.Timeline)
                     refreshTasks.Add(this.RefreshTabAsync<HomeTabModel>());
                 ResetTimers.Timeline = false;
             }
             if (ResetTimers.Reply || mentionCounter <= 0 && SettingManager.Common.ReplyPeriod > 0)
             {
                 Interlocked.Exchange(ref mentionCounter, SettingManager.Common.ReplyPeriod);
-                if (!tw.IsUserstreamDataReceived && !ResetTimers.Reply)
+                if (!ResetTimers.Reply)
                     refreshTasks.Add(this.RefreshTabAsync<MentionsTabModel>());
                 ResetTimers.Reply = false;
             }
             if (ResetTimers.DirectMessage || dmCounter <= 0 && SettingManager.Common.DMPeriod > 0)
             {
                 Interlocked.Exchange(ref dmCounter, SettingManager.Common.DMPeriod);
-                if (!tw.IsUserstreamDataReceived && !ResetTimers.DirectMessage)
+                if (!ResetTimers.DirectMessage)
                     refreshTasks.Add(this.RefreshTabAsync<DirectMessagesTabModel>());
                 ResetTimers.DirectMessage = false;
             }
@@ -2810,6 +2810,32 @@ namespace OpenTween
             catch (WebApiException ex)
             {
                 this.StatusLabel.Text = $"Err:{ex.Message}(RefreshFollowersIds)";
+            }
+            finally
+            {
+                this.workerSemaphore.Release();
+            }
+        }
+
+        private async Task RefreshFriendIdsAsync()
+        {
+            await this.workerSemaphore.WaitAsync();
+            try
+            {
+                //this.StatusLabel.Text = Properties.Resources.UpdateFollowersMenuItem1_ClickText1;
+
+                await this.tw.RefreshFriendsIds();
+
+                //this.StatusLabel.Text = Properties.Resources.UpdateFollowersMenuItem1_ClickText3;
+
+                tw.StartUserStream();
+                this.RefreshTimeline();
+                this.PurgeListViewItemCache();
+                this._curList?.Refresh();
+            }
+            catch (WebApiException ex)
+            {
+                this.StatusLabel.Text = $"Err:{ex.Message}(RefreshFriendsIds)";
             }
             finally
             {
@@ -9922,6 +9948,9 @@ namespace OpenTween
                 if (!tw.GetFollowersSuccess && SettingManager.Common.StartupFollowers)
                     reloadTasks.Add(this.RefreshFollowerIdsAsync());
 
+                if (!tw.GetFriendsSuccess)
+                    reloadTasks.Add(this.RefreshFriendIdsAsync());
+
                 if (!tw.GetNoRetweetSuccess)
                     reloadTasks.Add(this.RefreshNoRetweetIdsAsync());
 
@@ -11661,7 +11690,7 @@ namespace OpenTween
         {
             tw.AllAtReply = AllrepliesToolStripMenuItem.Checked;
             this.ModifySettingCommon = true;
-            tw.ReconnectUserStream();
+            //tw.ReconnectUserStream();
         }
 
         private void EventViewerMenuItem_Click(object sender, EventArgs e)

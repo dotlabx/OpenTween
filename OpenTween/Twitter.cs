@@ -154,11 +154,13 @@ namespace OpenTween
         public TwitterTextConfiguration TextConfiguration { get; private set; }
 
         public bool GetFollowersSuccess { get; private set; } = false;
+        public bool GetFriendsSuccess { get; private set; } = false;
         public bool GetNoRetweetSuccess { get; private set; } = false;
 
         delegate void GetIconImageDelegate(PostClass post);
         private readonly object LockObj = new object();
         private ISet<long> followerId = new HashSet<long>();
+        private ISet<long> friendId = new HashSet<long>();
         private long[] noRTId = new long[0];
 
         //プロパティからアクセスされる共通情報
@@ -1537,6 +1539,33 @@ namespace OpenTween
         }
 
         /// <summary>
+        /// フォローIDを更新します
+        /// </summary>
+        /// <exception cref="WebApiException"/>
+        public async Task RefreshFriendsIds()
+        {
+            if (MyCommon._endingFlag) return;
+
+            var cursor = -1L;
+            var newIds = new HashSet<long>();
+            do
+            {
+                var ret = await this.Api.FriendsIds(cursor)
+                    .ConfigureAwait(false);
+
+                if (ret.Ids == null)
+                    throw new WebApiException("ret.ids == null");
+
+                newIds.UnionWith(ret.Ids);
+                cursor = ret.NextCursor;
+            } while (cursor != 0);
+
+            this.friendId = newIds;
+
+            this.GetFriendsSuccess = true;
+        }
+
+        /// <summary>
         /// RT 非表示ユーザーを更新します
         /// </summary>
         /// <exception cref="WebApiException"/>
@@ -1989,6 +2018,26 @@ namespace OpenTween
                         // 従来通り公式 RT の表示も行うため break しない
                     }
 
+                    // Trackワードが未設定か含まれていない
+                    if (string.IsNullOrWhiteSpace(this.TrackWord) || !this.TrackWord.Split(',').Any(w => status.FullText.Contains(w)))
+                    {
+                        if (status.RetweetedStatus != null)
+                        {
+                            // フォロー外ユーザーのRT
+                            if (!this.friendId.Contains(status.User.Id)) break;
+                        }
+                        else if (status.InReplyToUserId.HasValue && status.InReplyToUserId != this.UserId && status.User.Id != this.UserId)
+                        {
+                            // RTを除く自分以外から送られた自分以外へのリプライ
+
+                            // フォロー外からのリプライ
+                            if (!this.friendId.Contains(status.User.Id)) break;
+
+                            // フォロー外へのフォローユーザーからのリプライは All @replies に従う
+                            if (!this.AllAtReply && !this.friendId.Contains((long)status.InReplyToUserId)) break;
+                        }
+                    }
+
                     this.CreatePostsFromJson(new[] { status }, MyCommon.WORKERTYPE.UserStream, null, false);
                     this.NewPostFromStream?.Invoke(this, EventArgs.Empty);
                     break;
@@ -1999,7 +2048,7 @@ namespace OpenTween
                     break;
 
                 case StreamMessageDelete deleteMessage:
-                    var deletedId = deleteMessage.Status?.Id ?? deleteMessage.DirectMessage?.Id;
+                    var deletedId = deleteMessage.Item.Status?.Id ?? deleteMessage.Item.DirectMessage?.Id;
                     if (deletedId == null)
                         break;
 
@@ -2209,8 +2258,9 @@ namespace OpenTween
 
         public void StartUserStream()
         {
-            var replies = this.AllAtReply ? "all" : null;
-            var streamObservable = this.Api.UserStreams(replies, this.TrackWord);
+            //var replies = this.AllAtReply ? "all" : null;
+            //var streamObservable = this.Api.UserStreams(replies, this.TrackWord);
+            var streamObservable = this.Api.Stream(this.friendId.ToArray<long>(), this.TrackWord);
             var newConnector = new StreamAutoConnector(streamObservable);
 
             newConnector.MessageReceived += userStream_MessageReceived;

@@ -70,17 +70,24 @@ namespace OpenTween.Api.DataModel
     public class StreamMessageDelete : ITwitterStreamMessage
     {
         [DataContract]
-        public class DeletedId
+        public class DeleteItem
         {
-            [DataMember(Name = "id")]
-            public long Id { get; set; }
+            [DataContract]
+            public class DeletedId
+            {
+                [DataMember(Name = "id")]
+                public long Id { get; set; }
+            }
+
+            [DataMember(Name = "direct_message", IsRequired = false)]
+            public DeletedId DirectMessage { get; set; } // Nullable
+
+            [DataMember(Name = "status", IsRequired = false)]
+            public DeletedId Status { get; set; } // Nullable
         }
 
-        [DataMember(Name = "direct_message", IsRequired = false)]
-        public DeletedId DirectMessage { get; set; } // Nullable
-
-        [DataMember(Name = "status", IsRequired = false)]
-        public DeletedId Status { get; set; } // Nullable
+        [DataMember(Name = "delete")]
+        public DeleteItem Item { get; set; }
 
         public static StreamMessageDelete ParseJson(string json)
             => MyCommon.CreateDataFromJson<StreamMessageDelete>(json);
