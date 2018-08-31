@@ -2260,7 +2260,7 @@ namespace OpenTween
         {
             //var replies = this.AllAtReply ? "all" : null;
             //var streamObservable = this.Api.UserStreams(replies, this.TrackWord);
-            var streamObservable = this.Api.Stream(this.friendId.ToArray<long>(), this.TrackWord);
+            var streamObservable = this.Api.StreamFilter(this.friendId.ToArray<long>(), this.TrackWord);
             var newConnector = new StreamAutoConnector(streamObservable);
 
             newConnector.MessageReceived += userStream_MessageReceived;

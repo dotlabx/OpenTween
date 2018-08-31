@@ -173,6 +173,38 @@ namespace OpenTween.Connection
             }
         }
 
+        public async Task<Stream> PostStreamingStreamAsync(Uri uri, IDictionary<string, string> param)
+        {
+            var requestUri = new Uri(RestApiBase, uri);
+            var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
+
+            using (var postContent = new FormUrlEncodedContent(param))
+            {
+                request.Content = postContent;
+
+                HttpResponseMessage response = null;
+                try
+                {
+                    response = await this.httpStreaming.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
+                        .ConfigureAwait(false);
+
+                    await this.CheckStatusCode(response)
+                        .ConfigureAwait(false);
+
+                    return await response.Content.ReadAsStreamAsync()
+                        .ConfigureAwait(false);
+                }
+                catch (HttpRequestException ex)
+                {
+                    throw TwitterApiException.CreateFromException(ex);
+                }
+                catch (OperationCanceledException ex)
+                {
+                    throw TwitterApiException.CreateFromException(ex);
+                }
+            }
+        }
+
         public async Task<LazyJson<T>> PostLazyAsync<T>(Uri uri, IDictionary<string, string> param)
         {
             var requestUri = new Uri(RestApiBase, uri);

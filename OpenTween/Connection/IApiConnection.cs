@@ -36,6 +36,8 @@ namespace OpenTween.Connection
 
         Task<Stream> GetStreamingStreamAsync(Uri uri, IDictionary<string, string> param);
 
+        Task<Stream> PostStreamingStreamAsync(Uri uri, IDictionary<string, string> param);
+
         Task<LazyJson<T>> PostLazyAsync<T>(Uri uri, IDictionary<string, string> param);
 
         Task<LazyJson<T>> PostLazyAsync<T>(Uri uri, IDictionary<string, string> param, IDictionary<string, IMediaItem> media);

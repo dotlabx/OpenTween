@@ -835,7 +835,7 @@ namespace OpenTween.Api
             return new TwitterStreamObservable(openStream);
         }
 
-        public TwitterStreamObservable Stream(long[] ids = null, string track = null)
+        public TwitterStreamObservable StreamFilter(long[] ids = null, string track = null)
         {
             var endpoint = new Uri("https://stream.twitter.com/1.1/statuses/filter.json");
             var param = new Dictionary<string, string>();
@@ -847,7 +847,7 @@ namespace OpenTween.Api
                 param["track"] = track;
 
             Task<Stream> openStream()
-                => this.apiConnection.GetStreamingStreamAsync(endpoint, param);
+                => this.apiConnection.PostStreamingStreamAsync(endpoint, param);
 
             return new TwitterStreamObservable(openStream);
         }
