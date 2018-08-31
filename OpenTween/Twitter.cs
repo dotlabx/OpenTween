@@ -2019,7 +2019,7 @@ namespace OpenTween
                     }
 
                     // Trackワードが未設定か含まれていない
-                    if (string.IsNullOrWhiteSpace(this.TrackWord) || !this.TrackWord.Split(',').Any(w => status.FullText.Contains(w)))
+                    if (string.IsNullOrWhiteSpace(this.TrackWord) || !this.TrackWord.Split(' ').Any(w => status.FullText.Contains(w)))
                     {
                         if (status.RetweetedStatus != null)
                         {

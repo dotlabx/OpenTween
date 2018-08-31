@@ -844,7 +844,7 @@ namespace OpenTween.Api
             if (ids != null && ids.Length > 0)
                 param["follow"] += "," + string.Join(",", ids);
             if (!string.IsNullOrEmpty(track))
-                param["track"] = track;
+                param["track"] = string.Join(",", track.Split(' '));
 
             Task<Stream> openStream()
                 => this.apiConnection.PostStreamingStreamAsync(endpoint, param);
