@@ -2828,7 +2828,6 @@ namespace OpenTween
 
                 //this.StatusLabel.Text = Properties.Resources.UpdateFollowersMenuItem1_ClickText3;
 
-                tw.StartUserStream();
                 this.RefreshTimeline();
                 this.PurgeListViewItemCache();
                 this._curList?.Refresh();
@@ -9861,7 +9860,7 @@ namespace OpenTween
             if (flg) LView.Invalidate(bnd);
         }
 
-        private void StartUserStream()
+        private void SetupUserStream()
         {
             tw.NewPostFromStream += tw_NewPostFromStream;
             tw.UserStreamStarted += tw_UserStreamStarted;
@@ -9870,7 +9869,10 @@ namespace OpenTween
             tw.UserStreamEventReceived += tw_UserStreamEventArrived;
 
             this.RefreshUserStreamsMenu();
+        }
 
+        private void StartUserStream()
+        {
             if (SettingManager.Common.UserstreamStartup)
                 tw.StartUserStream();
         }
@@ -9881,7 +9883,7 @@ namespace OpenTween
 
             if (this.IsNetworkAvailable())
             {
-                StartUserStream();
+                SetupUserStream();
 
                 var loadTasks = new List<Task>
                 {
@@ -9958,6 +9960,8 @@ namespace OpenTween
                     reloadTasks.Add(this.RefreshTwitterConfigurationAsync());
 
                 await Task.WhenAll(reloadTasks);
+
+                StartUserStream();
             }
 
             _initial = false;
