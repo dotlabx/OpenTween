@@ -11475,7 +11475,7 @@ namespace OpenTween
             this.RefreshUserStreamsMenu();
             this.MenuItemUserStream.Enabled = true;
 
-            StatusLabel.Text = "UserStream Started.";
+            StatusLabel.Text = "Stream Started.";
         }
 
         private async void tw_UserStreamStopped(object sender, EventArgs e)
@@ -11500,19 +11500,19 @@ namespace OpenTween
             this.RefreshUserStreamsMenu();
             this.MenuItemUserStream.Enabled = true;
 
-            StatusLabel.Text = "UserStream Stopped.";
+            StatusLabel.Text = "Stream Stopped.";
         }
 
         private void RefreshUserStreamsMenu()
         {
             if (this.tw.UserStreamActive)
             {
-                this.MenuItemUserStream.Text = "&UserStream ▶";
+                this.MenuItemUserStream.Text = "&Stream ▶";
                 this.StopToolStripMenuItem.Text = "&Stop";
             }
             else
             {
-                this.MenuItemUserStream.Text = "&UserStream ■";
+                this.MenuItemUserStream.Text = "&Stream ■";
                 this.StopToolStripMenuItem.Text = "&Start";
             }
         }
