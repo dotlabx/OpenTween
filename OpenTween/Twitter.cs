@@ -2260,6 +2260,10 @@ namespace OpenTween
         {
             //var replies = this.AllAtReply ? "all" : null;
             //var streamObservable = this.Api.UserStreams(replies, this.TrackWord);
+            if (this.friendId.Count >= 5000)
+            {
+                return;
+            }
             var streamObservable = this.Api.StreamFilter(this.friendId.ToArray<long>(), this.TrackWord);
             var newConnector = new StreamAutoConnector(streamObservable);
 
