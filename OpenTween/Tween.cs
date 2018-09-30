@@ -1109,8 +1109,9 @@ namespace OpenTween
 
             //タイマー設定
 
-            this.RefreshThrottlingTimer = new ThrottlingTimer(TimeSpan.Zero,
-                () => this.InvokeAsync(() => this.RefreshTimelineInternal()));
+            var streamingRefreshInterval = TimeSpan.FromSeconds(SettingManager.Common.UserstreamPeriod);
+            this.RefreshThrottlingTimer = new ThrottlingTimer(streamingRefreshInterval,
+                () => this.InvokeAsync(() => this.RefreshTimeline()));
 
             TimerTimeline.AutoReset = true;
             TimerTimeline.SynchronizingObject = this;
@@ -1273,6 +1274,15 @@ namespace OpenTween
         private void TimerInterval_Changed(object sender, IntervalChangedEventArgs e) //Handles SettingDialog.IntervalChanged
         {
             if (!TimerTimeline.Enabled) return;
+
+            if (e.UserStream)
+            {
+                var interval = TimeSpan.FromSeconds(SettingManager.Common.UserstreamPeriod);
+                var newTimer = new ThrottlingTimer(interval, () => this.InvokeAsync(() => this.RefreshTimeline()));
+                var oldTimer = Interlocked.Exchange(ref this.RefreshThrottlingTimer, newTimer);
+                oldTimer.Dispose();
+            }
+
             ResetTimers = e;
         }
 
@@ -1284,7 +1294,6 @@ namespace OpenTween
         private static int pubSearchCounter = 0;
         private static int userTimelineCounter = 0;
         private static int listsCounter = 0;
-        private static int usCounter = 0;
         private static int ResumeWait = 0;
         private static int refreshFollowers = 0;
 
@@ -1296,7 +1305,6 @@ namespace OpenTween
             if (pubSearchCounter > 0) Interlocked.Decrement(ref pubSearchCounter);
             if (userTimelineCounter > 0) Interlocked.Decrement(ref userTimelineCounter);
             if (listsCounter > 0) Interlocked.Decrement(ref listsCounter);
-            if (usCounter > 0) Interlocked.Decrement(ref usCounter);
             Interlocked.Increment(ref refreshFollowers);
 
             var refreshTasks = new List<Task>();
@@ -1344,13 +1352,6 @@ namespace OpenTween
                     refreshTasks.Add(this.RefreshTabAsync<ListTimelineTabModel>());
                 ResetTimers.Lists = false;
             }
-            if (ResetTimers.UserStream || usCounter <= 0 && SettingManager.Common.UserstreamPeriod > 0)
-            {
-                Interlocked.Exchange(ref usCounter, SettingManager.Common.UserstreamPeriod);
-                if (this.tw.UserStreamActive)
-                    this.RefreshTimeline();
-                ResetTimers.UserStream = false;
-            }
             if (refreshFollowers > 6 * 3600)
             {
                 Interlocked.Exchange(ref refreshFollowers, 0);
@@ -1386,9 +1387,6 @@ namespace OpenTween
         }
 
         private void RefreshTimeline()
-            => this.RefreshThrottlingTimer.Invoke();
-
-        private void RefreshTimelineInternal()
         {
             var curTabModel = this._statuses.Tabs[this._curTab.Text];
 
@@ -2289,7 +2287,7 @@ namespace OpenTween
 
             try
             {
-                await tab.RefreshAsync(this.tw, backward, this._initial, this.workerProgress);
+                await Task.Run(() => tab.RefreshAsync(this.tw, backward, this._initial, this.workerProgress));
                 this.RefreshTimeline();
             }
             catch (WebApiException ex)
@@ -11448,9 +11446,7 @@ namespace OpenTween
 
             this._statuses.DistributePosts();
 
-            if (SettingManager.Common.UserstreamPeriod > 0) return;
-
-            this.RefreshTimeline();
+            this.RefreshThrottlingTimer.Invoke();
         }
 
         private async void tw_UserStreamStarted(object sender, EventArgs e)
