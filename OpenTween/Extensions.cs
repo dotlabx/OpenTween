@@ -75,15 +75,57 @@ namespace OpenTween
         }
 
         /// <summary>
-        /// 文字列中の指定された位置にある文字のコードポイントを返します
+        /// 文字列をコードポイント単位に分割して返します
         /// </summary>
-        public static int GetCodepointAtSafe(this string s, int index)
+        public static IEnumerable<int> ToCodepoints(this string s)
         {
-            // IsSurrogatePair が true を返す場合のみ ConvertToUtf32 メソッドを使用する
-            if (char.IsSurrogatePair(s, index))
-                return char.ConvertToUtf32(s, index);
+            if (s == null)
+                throw new ArgumentNullException(nameof(s));
 
-            return s[index];
+            IEnumerable<int> GetEnumerable(string input)
+            {
+                var i = 0;
+                var length = input.Length;
+                while (i < length)
+                {
+                    if (char.IsSurrogatePair(input, i))
+                    {
+                        yield return char.ConvertToUtf32(input, i);
+                        i += 2;
+                    }
+                    else
+                    {
+                        yield return input[i];
+                        i++;
+                    }
+                }
+            }
+
+            return GetEnumerable(s);
+        }
+
+        /// <summary>
+        /// 指定された部分文字列のコードポイント単位での文字数を返す
+        /// </summary>
+        /// <param name="s">文字列</param>
+        /// <param name="start">開始位置</param>
+        /// <param name="end">終了位置</param>
+        public static int GetCodepointCount(this string s, int start, int end)
+        {
+            if (s == null)
+                throw new ArgumentNullException(nameof(s));
+            if (start < 0 || start > s.Length)
+                throw new ArgumentOutOfRangeException(nameof(start));
+            if (end < 0 || end > s.Length)
+                throw new ArgumentOutOfRangeException(nameof(end));
+            if (start > end)
+                throw new ArgumentOutOfRangeException(nameof(start));
+
+            var count = 0;
+            for (var i = start; i < end; i += char.IsSurrogatePair(s, i) ? 2 : 1)
+                count++;
+
+            return count;
         }
 
         public static Task ForEachAsync<T>(this IObservable<T> observable, Action<T> subscriber)

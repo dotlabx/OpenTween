@@ -161,7 +161,7 @@ namespace OpenTween
         private readonly object LockObj = new object();
         private ISet<long> followerId = new HashSet<long>();
         private ISet<long> friendId = new HashSet<long>();
-        private long[] noRTId = new long[0];
+        private long[] noRTId = Array.Empty<long>();
 
         //プロパティからアクセスされる共通情報
         private List<string> _hashList = new List<string>();
@@ -808,7 +808,7 @@ namespace OpenTween
             post.Source = string.Intern(sourceText);
             post.SourceUri = sourceUri;
 
-            post.IsReply = post.RetweetedId == null && post.ReplyToList.Any(x => x.Item1 == this.UserId);
+            post.IsReply = post.RetweetedId == null && post.ReplyToList.Any(x => x.UserId == this.UserId);
             post.IsExcludeReply = false;
 
             if (post.IsMe)
@@ -832,7 +832,7 @@ namespace OpenTween
             var urls = entities.OfType<TwitterEntityUrl>().Select(x => x.ExpandedUrl);
 
             if (quotedStatusLink != null)
-                urls = urls.Concat(new[] { quotedStatusLink.Expanded });
+                urls = urls.Append(quotedStatusLink.Expanded);
 
             return GetQuoteTweetStatusIds(urls);
         }
@@ -1459,7 +1459,7 @@ namespace OpenTween
             if (MyCommon._endingFlag) return;
 
             var cursor = -1L;
-            var newFollowerIds = new HashSet<long>();
+            var newFollowerIds = Enumerable.Empty<long>();
             do
             {
                 var ret = await this.Api.FollowersIds(cursor)
@@ -1468,11 +1468,11 @@ namespace OpenTween
                 if (ret.Ids == null)
                     throw new WebApiException("ret.ids == null");
 
-                newFollowerIds.UnionWith(ret.Ids);
+                newFollowerIds = newFollowerIds.Concat(ret.Ids);
                 cursor = ret.NextCursor;
             } while (cursor != 0);
 
-            this.followerId = newFollowerIds;
+            this.followerId = newFollowerIds.ToHashSet();
             TabInformations.GetInstance().RefreshOwl(this.followerId);
 
             this.GetFollowersSuccess = true;
@@ -1616,7 +1616,7 @@ namespace OpenTween
             }
         }
 
-        private void ExtractEntities(TwitterEntities entities, List<Tuple<long, string>> AtList, List<MediaInfo> media)
+        private void ExtractEntities(TwitterEntities entities, List<(long UserId, string ScreenName)> AtList, List<MediaInfo> media)
         {
             if (entities != null)
             {
@@ -1631,7 +1631,7 @@ namespace OpenTween
                 {
                     foreach (var ent in entities.UserMentions)
                     {
-                        AtList.Add(Tuple.Create(ent.Id, ent.ScreenName));
+                        AtList.Add((ent.Id, ent.ScreenName));
                     }
                 }
                 if (entities.Media != null)
@@ -1662,8 +1662,10 @@ namespace OpenTween
 
         internal static string CreateHtmlAnchor(string text, TwitterEntities entities, TwitterQuotedStatusPermalink quotedStatusLink)
         {
+            var mergedEntities = entities.Concat(TweetExtractor.ExtractEmojiEntities(text));
+
             // PostClass.ExpandedUrlInfo を使用して非同期に URL 展開を行うためここでは expanded_url を使用しない
-            text = TweetFormatter.AutoLinkHtml(text, entities, keepTco: true);
+            text = TweetFormatter.AutoLinkHtml(text, mergedEntities, keepTco: true);
 
             text = Regex.Replace(text, "(^|[^a-zA-Z0-9_/&#＃@＠>=.~])(sm|nm)([0-9]{1,10})", "$1<a href=\"http://www.nicovideo.jp/watch/$2$3\">$2$3</a>");
             text = PreProcessUrl(text); //IDN置換
@@ -1739,19 +1741,20 @@ namespace OpenTween
             if (MyCommon._endingFlag) return;
 
             var cursor = -1L;
-            var newBlockIds = new HashSet<long>();
+            var newBlockIds = Enumerable.Empty<long>();
             do
             {
                 var ret = await this.Api.BlocksIds(cursor)
                     .ConfigureAwait(false);
 
-                newBlockIds.UnionWith(ret.Ids);
+                newBlockIds = newBlockIds.Concat(ret.Ids);
                 cursor = ret.NextCursor;
             } while (cursor != 0);
 
-            newBlockIds.Remove(this.UserId); // 元のソースにあったので一応残しておく
+            var blockIdsSet = newBlockIds.ToHashSet();
+            blockIdsSet.Remove(this.UserId); // 元のソースにあったので一応残しておく
 
-            TabInformations.GetInstance().BlockIds = newBlockIds;
+            TabInformations.GetInstance().BlockIds = blockIdsSet;
         }
 
         /// <summary>
@@ -1765,7 +1768,7 @@ namespace OpenTween
             var ids = await TwitterIds.GetAllItemsAsync(x => this.Api.MutesUsersIds(x))
                 .ConfigureAwait(false);
 
-            TabInformations.GetInstance().MuteUserIds = new HashSet<long>(ids);
+            TabInformations.GetInstance().MuteUserIds = ids.ToHashSet();
         }
 
         public string[] GetHashList()
@@ -1839,41 +1842,46 @@ namespace OpenTween
             var config = this.TextConfiguration;
             var totalWeight = 0;
 
-            var urls = TweetExtractor.ExtractUrlEntities(postText).ToArray();
-
-            var pos = 0;
-            while (pos < postText.Length)
+            int GetWeightFromCodepoint(int codepoint)
             {
-                var urlEntity = urls.FirstOrDefault(x => x.Indices[0] == pos);
-                if (urlEntity != null)
-                {
-                    totalWeight += config.TransformedURLLength * config.Scale;
-
-                    var urlLength = urlEntity.Indices[1] - urlEntity.Indices[0];
-                    pos += urlLength;
-
-                    continue;
-                }
-
-                var codepoint = postText.GetCodepointAtSafe(pos);
-                var weight = config.DefaultWeight;
-
                 foreach (var weightRange in config.Ranges)
                 {
                     if (codepoint >= weightRange.Start && codepoint <= weightRange.End)
-                    {
-                        weight = weightRange.Weight;
-                        break;
-                    }
+                        return weightRange.Weight;
                 }
 
-                totalWeight += weight;
+                return config.DefaultWeight;
+            }
 
-                var isSurrogatePair = codepoint > 0xffff;
-                if (isSurrogatePair)
-                    pos += 2; // サロゲートペアの場合は2文字分進める
-                else
-                    pos++;
+            var urls = TweetExtractor.ExtractUrlEntities(postText).ToArray();
+            var emojis = config.EmojiParsingEnabled
+                ? TweetExtractor.ExtractEmojiEntities(postText).ToArray()
+                : Array.Empty<TwitterEntityEmoji>();
+
+            var codepoints = postText.ToCodepoints().ToArray();
+            var index = 0;
+            while (index < codepoints.Length)
+            {
+                var urlEntity = urls.FirstOrDefault(x => x.Indices[0] == index);
+                if (urlEntity != null)
+                {
+                    totalWeight += config.TransformedURLLength * config.Scale;
+                    index = urlEntity.Indices[1];
+                    continue;
+                }
+
+                var emojiEntity = emojis.FirstOrDefault(x => x.Indices[0] == index);
+                if (emojiEntity != null)
+                {
+                    totalWeight += GetWeightFromCodepoint(codepoints[index]);
+                    index = emojiEntity.Indices[1];
+                    continue;
+                }
+
+                var codepoint = codepoints[index];
+                totalWeight += GetWeightFromCodepoint(codepoint);
+
+                index++;
             }
 
             var remainWeight = config.MaxWeightedTweetLength * config.Scale - totalWeight;
