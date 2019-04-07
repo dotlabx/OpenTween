@@ -385,16 +385,13 @@
     <value>Invalid setting value.</value>
   </data>
   <data name="SearchItem1Url" xml:space="preserve">
-    <value>http://en.wikipedia.org/wiki/{0}</value>
+    <value>https://en.wikipedia.org/w/index.php?search={0}</value>
   </data>
   <data name="SearchItem2Url" xml:space="preserve">
-    <value>http://www.google.com/search?q={0}</value>
-  </data>
-  <data name="SearchItem3Url" xml:space="preserve">
-    <value>http://yats-data.com/yats/search?query={0}</value>
+    <value>https://www.google.com/search?q={0}</value>
   </data>
   <data name="SearchItem4Url" xml:space="preserve">
-    <value>http://search.twitter.com/search?q={0}</value>
+    <value>https://twitter.com/search?q={0}</value>
   </data>
   <data name="SetFiltersText1" xml:space="preserve">
     <value>[User: {0}]  </value>
@@ -852,9 +849,6 @@ Do you want to upload the {1} selected media file(s)?</value>
   </data>
   <data name="MyLists1" xml:space="preserve">
     <value> : Manage Lists</value>
-  </data>
-  <data name="FavstarUrl" xml:space="preserve">
-    <value>http://favstar.fm/</value>
   </data>
   <data name="VimeoInfoText1" xml:space="preserve">
     <value>Title:</value>

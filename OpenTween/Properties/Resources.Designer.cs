@@ -652,20 +652,17 @@ namespace OpenTween.Properties {
         /// <summary>
         ///   更新履歴
         ///
-        ///==== Ver 2.2.1-dev(20xx/xx/xx)
+        ///==== Ver 2.3.1-dev(2019/xx/xx)
         ///
-        ///==== Ver 2.2.0(2018/11/03)
-        /// * NEW: 絵文字に関する文字数カウントの新仕様に対応しました
-        ///  - この変更により「👩‍👧‍👦」「👨‍🎨」など複数の文字で構成される絵文字を入力した場合の文字数制限が緩和されます
-        /// * NEW: Twemoji 11.2.0 に対応しました
-        ///  - Unicode 11.0 で追加された絵文字が表示されるようになります
-        /// * NEW: ツイートの投稿に失敗し再試行せずにキャンセルした場合は、発言入力欄に未投稿のテキストを復元します
-        /// * NEW: アップデート通知のダイアログに「このバージョンを無視」ボタンを追加しました
-        /// * FIX: ユーザー情報ダイアログでbioに絵文字を含む場合にハッシュタグやメンションのリンク範囲がずれる不具合を修正
-        /// * FIX: 投稿時取得の設定がオンの場合に、投稿したRTがタイムラインに反映されないことがある不具合を修正
-        ///
-        ///==== Ver 2.1.2(2018/09/30)
-        /// * CHG: 投稿時取得 [残りの文字列は切り詰められました]&quot;; に類似しているローカライズされた文字列を検索します。
+        ///==== Ver 2.3.0(2019/04/08)
+        /// * CHG: 投稿欄にフォーカスしている間は一部のショートカットを無効にします (thx @pitermach, @lukaszgo1!)
+        ///  - 対象となるショートカットは Ctrl+Alt+S (Fav+RT), Ctrl+Alt+R (Fav+非公式RT), Ctrl+Alt+H (ユーザー指定のURLを開く) の3つです
+        ///  - AltGrキーを使う言語のキーボートとショートカットキーが重複する問題への対処です
+        /// * CHG: Microsoft Translator Text API v3 に対応
+        ///  - OpenTweenの古いバージョンの翻訳機能は 2019/4/30 以降に使用できなくなります
+        /// * CHG: 短縮URLの展開時にHTTPSが使用できるドメインは強制的にHTTPSを使用する
+        /// * CHG: 廃止された短縮URLサービスのドメインをURL展開の対象から削除
+        /// * CHG: 短縮URLで生成されるURLがHTTPSになるように変 [残りの文字列は切り詰められました]&quot;; に類似しているローカライズされた文字列を検索します。
         /// </summary>
         internal static string ChangeLog {
             get {
@@ -1114,15 +1111,6 @@ namespace OpenTween.Properties {
         internal static string FavRemoveToolStripMenuItem_ClickText4 {
             get {
                 return ResourceManager.GetString("FavRemoveToolStripMenuItem_ClickText4", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   http://ja.favstar.fm/ に類似しているローカライズされた文字列を検索します。
-        /// </summary>
-        internal static string FavstarUrl {
-            get {
-                return ResourceManager.GetString("FavstarUrl", resourceCulture);
             }
         }
         
@@ -2300,7 +2288,7 @@ namespace OpenTween.Properties {
         }
         
         /// <summary>
-        ///   http://ja.wikipedia.org/wiki/{0} に類似しているローカライズされた文字列を検索します。
+        ///   https://ja.wikipedia.org/w/index.php?search={0} に類似しているローカライズされた文字列を検索します。
         /// </summary>
         internal static string SearchItem1Url {
             get {
@@ -2309,7 +2297,7 @@ namespace OpenTween.Properties {
         }
         
         /// <summary>
-        ///   http://www.google.com/search?hl=ja&amp;q={0} に類似しているローカライズされた文字列を検索します。
+        ///   https://www.google.com/search?hl=ja&amp;q={0} に類似しているローカライズされた文字列を検索します。
         /// </summary>
         internal static string SearchItem2Url {
             get {
@@ -2318,16 +2306,7 @@ namespace OpenTween.Properties {
         }
         
         /// <summary>
-        ///   http://yats-data.com/yats/search?query={0} に類似しているローカライズされた文字列を検索します。
-        /// </summary>
-        internal static string SearchItem3Url {
-            get {
-                return ResourceManager.GetString("SearchItem3Url", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   http://search.twitter.com/search?q={0} に類似しているローカライズされた文字列を検索します。
+        ///   https://twitter.com/search?q={0} に類似しているローカライズされた文字列を検索します。
         /// </summary>
         internal static string SearchItem4Url {
             get {
