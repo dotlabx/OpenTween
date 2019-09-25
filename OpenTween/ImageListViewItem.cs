@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Net.Http;
 using System.Runtime.Serialization;
@@ -35,8 +37,8 @@ namespace OpenTween
     [Serializable]
     public class ImageListViewItem : ListViewItem
     {
-        protected readonly ImageCache imageCache;
-        protected readonly string imageUrl;
+        protected readonly ImageCache? imageCache;
+        protected readonly string? imageUrl;
 
         /// <summary>
         /// 状態表示に使用するアイコンのインデックスを取得・設定する。
@@ -46,24 +48,24 @@ namespace OpenTween
         /// </remarks>
         public int StateIndex { get; set; }
 
-        private WeakReference imageReference = new WeakReference(null);
-        private Task imageTask = null;
+        private readonly WeakReference imageReference = new WeakReference(null);
+        private Task? imageTask = null;
 
-        public event EventHandler ImageDownloaded;
+        public event EventHandler? ImageDownloaded;
 
         public ImageListViewItem(string[] items)
             : this(items, null, null)
         {
         }
 
-        public ImageListViewItem(string[] items, ImageCache imageCache, string imageUrl)
+        public ImageListViewItem(string[] items, ImageCache? imageCache, string? imageUrl)
             : base(items)
         {
             this.imageCache = imageCache;
             this.imageUrl = imageUrl;
             this.StateIndex = -1;
 
-            var image = imageCache?.TryGetFromCache(imageUrl);
+            var image = imageUrl != null ? imageCache?.TryGetFromCache(imageUrl) : null;
 
             if (image != null)
                 this.imageReference.Target = image;
@@ -86,7 +88,7 @@ namespace OpenTween
 
         private async Task GetImageAsyncInternal(bool force)
         {
-            if (string.IsNullOrEmpty(this.imageUrl))
+            if (MyCommon.IsNullOrEmpty(this.imageUrl) || this.imageCache == null)
                 return;
 
             if (!force && this.imageReference.Target != null)

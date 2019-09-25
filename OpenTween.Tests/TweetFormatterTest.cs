@@ -165,7 +165,6 @@ namespace OpenTween
             Assert.Equal(expected, TweetFormatter.AutoLinkHtml(text, entities));
         }
 
-
         [Fact]
         public void FormatEmojiEntity_Test()
         {
@@ -183,11 +182,31 @@ namespace OpenTween
             var expected = "<img class=\"emoji\" src=\"https://twemoji.maxcdn.com/2/72x72/1f363.png\" alt=\"🍣\" />";
             Assert.Equal(expected, TweetFormatter.AutoLinkHtml(text, entities));
         }
+
+        [Fact]
+        public void FormatEmojiEntity_EmptyUrlTest()
+        {
+            // 余分な U+FE0F があった場合に Url が空の絵文字エンティティが渡される
+            var text = "\uFE0F";
+            var entities = new[]
+            {
+                new TwitterEntityEmoji
+                {
+                    Indices = new[] { 0, 1 },
+                    Text = "",
+                    Url = "",
+                },
+            };
+
+            var expected = "";
+            Assert.Equal(expected, TweetFormatter.AutoLinkHtml(text, entities));
+        }
+
         [Fact]
         public void AutoLinkHtml_EntityNullTest()
         {
             var text = "てすとてすとー";
-            TwitterEntities entities = null;
+            TwitterEntities? entities = null;
 
             var expected = "てすとてすとー";
             Assert.Equal(expected, TweetFormatter.AutoLinkHtml(text, entities));
@@ -197,7 +216,7 @@ namespace OpenTween
         public void AutoLinkHtml_EntityNullTest2()
         {
             var text = "てすとてすとー";
-            TwitterEntities entities = new TwitterEntities
+            var entities = new TwitterEntities
             {
                 Urls = null,
                 Hashtags = null,
@@ -213,17 +232,7 @@ namespace OpenTween
         public void AutoLinkHtml_EntityNullTest3()
         {
             var text = "てすとてすとー";
-            IEnumerable<TwitterEntity> entities = null;
-
-            var expected = "てすとてすとー";
-            Assert.Equal(expected, TweetFormatter.AutoLinkHtml(text, entities));
-        }
-
-        [Fact]
-        public void AutoLinkHtml_EntityNullTest4()
-        {
-            var text = "てすとてすとー";
-            IEnumerable<TwitterEntity> entities = new TwitterEntity[] { null };
+            IEnumerable<TwitterEntity>? entities = null;
 
             var expected = "てすとてすとー";
             Assert.Equal(expected, TweetFormatter.AutoLinkHtml(text, entities));
@@ -393,7 +402,7 @@ namespace OpenTween
         public void AutoLinkHtml_BreakLineTest()
         {
             var text = "てすと\nてすと\nてすと";
-            TwitterEntities entities = null;
+            TwitterEntities? entities = null;
 
             var expected = "てすと<br>てすと<br>てすと";
             Assert.Equal(expected, TweetFormatter.AutoLinkHtml(text, entities));

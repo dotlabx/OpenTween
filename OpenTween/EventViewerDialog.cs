@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -43,14 +45,14 @@ namespace OpenTween
 {
     public partial class EventViewerDialog : OTBaseForm
     {
-        public List<Twitter.FormattedEvent> EventSource { get; set; }
+        public List<Twitter.FormattedEvent> EventSource { get; set; } = new List<Twitter.FormattedEvent>();
 
-        private Twitter.FormattedEvent[] _filterdEventSource;
+        private Twitter.FormattedEvent[] _filterdEventSource = Array.Empty<Twitter.FormattedEvent>();
 
-        private ListViewItem[] _ItemCache = null;
+        private ListViewItem[]? _ItemCache = null;
         private int _itemCacheIndex;
 
-        private TabPage _curTab = null;
+        private TabPage _curTab = null!;
 
         public EventViewerDialog()
         {
@@ -129,7 +131,7 @@ namespace OpenTween
 
         private bool IsFilterMatch(Twitter.FormattedEvent x)
         {
-            if (!CheckBoxFilter.Checked || string.IsNullOrEmpty(TextBoxKeyword.Text))
+            if (!CheckBoxFilter.Checked || MyCommon.IsNullOrEmpty(TextBoxKeyword.Text))
             {
                 return true;
             }
@@ -139,7 +141,7 @@ namespace OpenTween
                 {
                     try
                     {
-                        Regex rx = new Regex(TextBoxKeyword.Text);
+                        var rx = new Regex(TextBoxKeyword.Text);
                         return rx.Match(x.Username).Success || rx.Match(x.Target).Success;
                     }
                     catch (Exception ex)
@@ -229,7 +231,7 @@ namespace OpenTween
             _ItemCache = new ListViewItem[] { };
             Array.Resize(ref _ItemCache, EndIndex - StartIndex + 1);
             _itemCacheIndex = StartIndex;
-            for (int i = 0; i < _ItemCache.Length; i++)
+            for (var i = 0; i < _ItemCache.Length; i++)
             {
                 _ItemCache[i] = CreateListViewItem(_filterdEventSource[StartIndex + i]);
             }
@@ -237,7 +239,7 @@ namespace OpenTween
 
         private void SaveLogButton_Click(object sender, EventArgs e)
         {
-            DialogResult rslt = MessageBox.Show(string.Format(Properties.Resources.SaveLogMenuItem_ClickText5, Environment.NewLine),
+            var rslt = MessageBox.Show(string.Format(Properties.Resources.SaveLogMenuItem_ClickText5, Environment.NewLine),
                     Properties.Resources.SaveLogMenuItem_ClickText2,
                     MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
             switch (rslt)
@@ -261,20 +263,18 @@ namespace OpenTween
             if (SaveFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 if (!SaveFileDialog1.ValidateNames) return;
-                using (StreamWriter sw = new StreamWriter(SaveFileDialog1.FileName, false, Encoding.UTF8))
+                using var sw = new StreamWriter(SaveFileDialog1.FileName, false, Encoding.UTF8);
+
+                switch (rslt)
                 {
-                    switch (rslt)
-                    {
-                        case DialogResult.Yes:
-                            SaveEventLog(_filterdEventSource.ToList(), sw);
-                            break;
-                        case DialogResult.No:
-                            SaveEventLog(EventSource, sw);
-                            break;
-                        default:
-                            //
-                            break;
-                    }
+                    case DialogResult.Yes:
+                        SaveEventLog(_filterdEventSource.ToList(), sw);
+                        break;
+                    case DialogResult.No:
+                        SaveEventLog(EventSource, sw);
+                        break;
+                    default:
+                        break;
                 }
             }
             this.TopMost = SettingManager.Common.AlwaysTop;
@@ -282,7 +282,7 @@ namespace OpenTween
 
         private void SaveEventLog(List<Twitter.FormattedEvent> source, StreamWriter sw)
         {
-            foreach (Twitter.FormattedEvent _event in source)
+            foreach (var _event in source)
             {
                 sw.WriteLine(_event.Eventtype + "\t" +
                              "\"" + _event.CreatedAt.ToLocalTimeString() + "\"\t" +
@@ -300,7 +300,6 @@ namespace OpenTween
                        .Where(e => e != "None" && e != "All")
                        .Select(e => new TabPage(e)
                        {
-                           // Name = "TabPage" + e,
                            Tag = e,
                            UseVisualStyleBackColor = true,
                            AccessibleRole = AccessibleRole.PageTab,

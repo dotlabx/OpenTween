@@ -25,6 +25,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,6 +51,7 @@ using System.Runtime.InteropServices;
 using OpenTween.Api;
 using OpenTween.Models;
 using OpenTween.Setting;
+using System.Diagnostics.CodeAnalysis;
 
 namespace OpenTween
 {
@@ -56,7 +59,7 @@ namespace OpenTween
     {
         private static readonly object LockObj = new object();
         public static bool _endingFlag;        //終了フラグ
-        public static string settingPath;
+        public static string settingPath = null!;
 
         public enum IconSizes
         {
@@ -162,20 +165,9 @@ namespace OpenTween
             public const string DM = "Direct";
             public const string FAV = "Favorites";
             public static readonly string MUTE = Properties.Resources.MuteTabName;
-
-            //private string dummy;
-
-            //private object ReferenceEquals()
-            //{
-            //    return new object();
-            //}
-            //private object Equals()
-            //{
-            //    return new object();
-            //}
         }
 
-        public static readonly object Block = null;
+        public static readonly object? Block = null;
         public static bool TraceFlag = false;
 
 #if DEBUG
@@ -276,19 +268,18 @@ namespace OpenTween
                 var fileName = $"{ApplicationSettings.AssemblyName}Trace-{now.ToLocalTime():yyyyMMdd-HHmmss}.log";
                 fileName = Path.Combine(logPath, fileName);
 
-                using (var writer = new StreamWriter(fileName))
-                {
-                    writer.WriteLine("**** TraceOut: {0} ****", now.ToLocalTimeString());
-                    writer.WriteLine(Properties.Resources.TraceOutText1, ApplicationSettings.FeedbackEmailAddress);
-                    writer.WriteLine(Properties.Resources.TraceOutText2, ApplicationSettings.FeedbackTwitterName);
-                    writer.WriteLine();
-                    writer.WriteLine(Properties.Resources.TraceOutText3);
-                    writer.WriteLine(Properties.Resources.TraceOutText4, Environment.OSVersion.VersionString);
-                    writer.WriteLine(Properties.Resources.TraceOutText5, Environment.Version);
-                    writer.WriteLine(Properties.Resources.TraceOutText6, ApplicationSettings.AssemblyName, FileVersion);
-                    writer.WriteLine(Message);
-                    writer.WriteLine();
-                }
+                using var writer = new StreamWriter(fileName);
+
+                writer.WriteLine("**** TraceOut: {0} ****", now.ToLocalTimeString());
+                writer.WriteLine(Properties.Resources.TraceOutText1, ApplicationSettings.FeedbackEmailAddress);
+                writer.WriteLine(Properties.Resources.TraceOutText2, ApplicationSettings.FeedbackTwitterName);
+                writer.WriteLine();
+                writer.WriteLine(Properties.Resources.TraceOutText3);
+                writer.WriteLine(Properties.Resources.TraceOutText4, Environment.OSVersion.VersionString);
+                writer.WriteLine(Properties.Resources.TraceOutText5, Environment.Version);
+                writer.WriteLine(Properties.Resources.TraceOutText6, ApplicationSettings.AssemblyName, FileVersion);
+                writer.WriteLine(Message);
+                writer.WriteLine();
             }
         }
 
@@ -299,7 +290,7 @@ namespace OpenTween
 
         public static string ExceptionOutMessage(Exception ex)
         {
-            bool IsTerminatePermission = true;
+            var IsTerminatePermission = true;
             return ExceptionOutMessage(ex, ref IsTerminatePermission);
         }
 
@@ -437,7 +428,7 @@ namespace OpenTween
             }
         }
 
-        private static void OpenErrorReportDialog(Form owner, ErrorReport report)
+        private static void OpenErrorReportDialog(Form? owner, ErrorReport report)
         {
             if (owner != null && owner.InvokeRequired)
             {
@@ -445,80 +436,9 @@ namespace OpenTween
                 return;
             }
 
-            using (var dialog = new SendErrorReportForm())
-            {
-                dialog.ErrorReport = report;
-                dialog.ShowDialog(owner);
-            }
-        }
-
-        /// <summary>
-        /// URLに含まれているマルチバイト文字列を%xx形式でエンコードします。
-        /// <newpara>
-        /// マルチバイト文字のコードはUTF-8またはUnicodeで自動的に判断します。
-        /// </newpara>
-        /// </summary>
-        /// <param name="_input">エンコード対象のURL</param>
-        /// <returns>マルチバイト文字の部分をUTF-8/%xx形式でエンコードした文字列を返します。</returns>
-
-        public static string urlEncodeMultibyteChar(string _input)
-        {
-            Uri uri = null;
-            var sb = new StringBuilder(256);
-            var result = "";
-            var c_ = 'd';
-            foreach (var c in _input)
-            {
-                c_ = c;
-                if (Convert.ToInt32(c) > 127 || c == '%') break;
-            }
-            if (Convert.ToInt32(c_) <= 127 && c_ != '%') return _input;
-
-            var input = Uri.UnescapeDataString(_input);
-        retry:
-            foreach (char c in input)
-            {
-                if (Convert.ToInt32(c) > 255)
-                {
-                    // Unicodeの場合(1charが複数のバイトで構成されている）
-                    // Uriクラスをnewして再構成し、入力をPathAndQueryのみとしてやり直す
-                    foreach (var b in Encoding.UTF8.GetBytes(c.ToString()))
-                    {
-                        sb.AppendFormat("%{0:X2}", b);
-                    }
-                }
-                else if (Convert.ToInt32(c) > 127 || c == '%')
-                {
-                    // UTF-8の場合
-                    // Uriクラスをnewして再構成し、入力をinputからAuthority部分を除去してやり直す
-                    if (uri == null)
-                    {
-                        uri = new Uri(input);
-                        input = input.Remove(0, uri.GetLeftPart(UriPartial.Authority).Length);
-                        sb.Length = 0;
-                        goto retry;
-                    }
-                    else
-                    {
-                        sb.Append("%" + Convert.ToInt16(c).ToString("X2").ToUpperInvariant());
-                    }
-                }
-                else
-                {
-                    sb.Append(c);
-                }
-            }
-
-            if (uri == null)
-            {
-                result = sb.ToString();
-            }
-            else
-            {
-                result = uri.GetLeftPart(UriPartial.Authority) + sb;
-            }
-
-            return result;
+            using var dialog = new SendErrorReportForm();
+            dialog.ErrorReport = report;
+            dialog.ShowDialog(owner);
         }
 
         /// <summary>
@@ -530,7 +450,7 @@ namespace OpenTween
         /// </summary>
         /// <param name="inputUrl">展開対象のURL</param>
         /// <returns>IDNが含まれていた場合はPunycodeに展開したURLをを返します。Punycode展開時にエラーが発生した場合はnullを返します。</returns>
-        public static string IDNEncode(string inputUrl)
+        public static string? IDNEncode(string inputUrl)
         {
             try
             {
@@ -563,7 +483,7 @@ namespace OpenTween
             }
             catch (Exception)
             {
-                return null;
+                return inputUrl;
             }
         }
 
@@ -578,8 +498,6 @@ namespace OpenTween
 
                 // Punycodeをデコードする
                 outputUrl = MyCommon.IDNDecode(outputUrl);
-                if (outputUrl == null)
-                    return inputUrl;
 
                 // URL内で特殊な意味を持つ記号は元の文字に変換されることを避けるために二重エスケープする
                 // 参考: Firefoxの losslessDecodeURI() 関数
@@ -618,110 +536,106 @@ namespace OpenTween
 
         public static string EncryptString(string str)
         {
-            if (string.IsNullOrEmpty(str)) return "";
+            if (MyCommon.IsNullOrEmpty(str)) return "";
 
             //文字列をバイト型配列にする
             var bytesIn = Encoding.UTF8.GetBytes(str);
 
             //DESCryptoServiceProviderオブジェクトの作成
-            using (var des = new DESCryptoServiceProvider())
+            using var des = new DESCryptoServiceProvider();
+
+            //共有キーと初期化ベクタを決定
+            //パスワードをバイト配列にする
+            var bytesKey = Encoding.UTF8.GetBytes("_tween_encrypt_key_");
+            //共有キーと初期化ベクタを設定
+            des.Key = ResizeBytesArray(bytesKey, des.Key.Length);
+            des.IV = ResizeBytesArray(bytesKey, des.IV.Length);
+
+            MemoryStream? msOut = null;
+            ICryptoTransform? desdecrypt = null;
+
+            try
             {
-                //共有キーと初期化ベクタを決定
-                //パスワードをバイト配列にする
-                var bytesKey = Encoding.UTF8.GetBytes("_tween_encrypt_key_");
-                //共有キーと初期化ベクタを設定
-                des.Key = ResizeBytesArray(bytesKey, des.Key.Length);
-                des.IV = ResizeBytesArray(bytesKey, des.IV.Length);
+                //暗号化されたデータを書き出すためのMemoryStream
+                msOut = new MemoryStream();
 
-                MemoryStream msOut = null;
-                ICryptoTransform desdecrypt = null;
+                //DES暗号化オブジェクトの作成
+                desdecrypt = des.CreateEncryptor();
 
-                try
-                {
-                    //暗号化されたデータを書き出すためのMemoryStream
-                    msOut = new MemoryStream();
+                //書き込むためのCryptoStreamの作成
+                using var cryptStream = new CryptoStream(msOut, desdecrypt, CryptoStreamMode.Write);
 
-                    //DES暗号化オブジェクトの作成
-                    desdecrypt = des.CreateEncryptor();
+                //Disposeが重複して呼ばれないようにする
+                var msTmp = msOut;
+                msOut = null;
+                desdecrypt = null;
 
-                    //書き込むためのCryptoStreamの作成
-                    using (CryptoStream cryptStream = new CryptoStream(msOut, desdecrypt, CryptoStreamMode.Write))
-                    {
-                        //Disposeが重複して呼ばれないようにする
-                        MemoryStream msTmp = msOut;
-                        msOut = null;
-                        desdecrypt = null;
+                //書き込む
+                cryptStream.Write(bytesIn, 0, bytesIn.Length);
+                cryptStream.FlushFinalBlock();
+                //暗号化されたデータを取得
+                var bytesOut = msTmp.ToArray();
 
-                        //書き込む
-                        cryptStream.Write(bytesIn, 0, bytesIn.Length);
-                        cryptStream.FlushFinalBlock();
-                        //暗号化されたデータを取得
-                        var bytesOut = msTmp.ToArray();
-
-                        //Base64で文字列に変更して結果を返す
-                        return Convert.ToBase64String(bytesOut);
-                    }
-                }
-                finally
-                {
-                    msOut?.Dispose();
-                    desdecrypt?.Dispose();
-                }
+                //Base64で文字列に変更して結果を返す
+                return Convert.ToBase64String(bytesOut);
+            }
+            finally
+            {
+                msOut?.Dispose();
+                desdecrypt?.Dispose();
             }
         }
 
         public static string DecryptString(string str)
         {
-            if (string.IsNullOrEmpty(str)) return "";
+            if (MyCommon.IsNullOrEmpty(str)) return "";
 
             //DESCryptoServiceProviderオブジェクトの作成
-            using (var des = new System.Security.Cryptography.DESCryptoServiceProvider())
+            using var des = new DESCryptoServiceProvider();
+
+            //共有キーと初期化ベクタを決定
+            //パスワードをバイト配列にする
+            var bytesKey = Encoding.UTF8.GetBytes("_tween_encrypt_key_");
+            //共有キーと初期化ベクタを設定
+            des.Key = ResizeBytesArray(bytesKey, des.Key.Length);
+            des.IV = ResizeBytesArray(bytesKey, des.IV.Length);
+
+            //Base64で文字列をバイト配列に戻す
+            var bytesIn = Convert.FromBase64String(str);
+
+            MemoryStream? msIn = null;
+            ICryptoTransform? desdecrypt = null;
+            CryptoStream? cryptStreem = null;
+
+            try
             {
-                //共有キーと初期化ベクタを決定
-                //パスワードをバイト配列にする
-                var bytesKey = Encoding.UTF8.GetBytes("_tween_encrypt_key_");
-                //共有キーと初期化ベクタを設定
-                des.Key = ResizeBytesArray(bytesKey, des.Key.Length);
-                des.IV = ResizeBytesArray(bytesKey, des.IV.Length);
+                //暗号化されたデータを読み込むためのMemoryStream
+                msIn = new MemoryStream(bytesIn);
+                //DES復号化オブジェクトの作成
+                desdecrypt = des.CreateDecryptor();
+                //読み込むためのCryptoStreamの作成
+                cryptStreem = new CryptoStream(msIn, desdecrypt, CryptoStreamMode.Read);
 
-                //Base64で文字列をバイト配列に戻す
-                var bytesIn = Convert.FromBase64String(str);
+                //Disposeが重複して呼ばれないようにする
+                msIn = null;
+                desdecrypt = null;
 
-                MemoryStream msIn = null;
-                ICryptoTransform desdecrypt = null;
-                CryptoStream cryptStreem = null;
+                //復号化されたデータを取得するためのStreamReader
+                using var srOut = new StreamReader(cryptStreem, Encoding.UTF8);
 
-                try
-                {
-                    //暗号化されたデータを読み込むためのMemoryStream
-                    msIn = new MemoryStream(bytesIn);
-                    //DES復号化オブジェクトの作成
-                    desdecrypt = des.CreateDecryptor();
-                    //読み込むためのCryptoStreamの作成
-                    cryptStreem = new CryptoStream(msIn, desdecrypt, CryptoStreamMode.Read);
+                //Disposeが重複して呼ばれないようにする
+                cryptStreem = null;
 
-                    //Disposeが重複して呼ばれないようにする
-                    msIn = null;
-                    desdecrypt = null;
+                //復号化されたデータを取得する
+                var result = srOut.ReadToEnd();
 
-                    //復号化されたデータを取得するためのStreamReader
-                    using (StreamReader srOut = new StreamReader(cryptStreem, Encoding.UTF8))
-                    {
-                        //Disposeが重複して呼ばれないようにする
-                        cryptStreem = null;
-
-                        //復号化されたデータを取得する
-                        var result = srOut.ReadToEnd();
-
-                        return result;
-                    }
-                }
-                finally
-                {
-                    msIn?.Dispose();
-                    desdecrypt?.Dispose();
-                    cryptStreem?.Dispose();
-                }
+                return result;
+            }
+            finally
+            {
+                msIn?.Dispose();
+                desdecrypt?.Dispose();
+                cryptStreem?.Dispose();
             }
         }
 
@@ -769,16 +683,13 @@ namespace OpenTween
             UserTimeline = 1024,
             Mute = 2048,
             SearchResults = 4096,
-            //RTMyTweet
-            //RTByOthers
-            //RTByMe
         }
 
         public static TwitterApiStatus TwitterApiInfo = new TwitterApiStatus();
 
         public static bool IsAnimatedGif(string filename)
         {
-            Image img = null;
+            Image? img = null;
             try
             {
                 img = Image.FromFile(filename);
@@ -825,17 +736,13 @@ namespace OpenTween
 
         public static T CreateDataFromJson<T>(string content)
         {
-            T data;
             var buf = Encoding.Unicode.GetBytes(content);
-            using (var stream = new MemoryStream(buf))
+            using var stream = new MemoryStream(buf);
+            var settings = new DataContractJsonSerializerSettings
             {
-                var settings = new DataContractJsonSerializerSettings
-                {
-                    UseSimpleDictionaryFormat = true,
-                };
-                data = (T)((new DataContractJsonSerializer(typeof(T), settings)).ReadObject(stream));
-            }
-            return data;
+                UseSimpleDictionaryFormat = true,
+            };
+            return (T)((new DataContractJsonSerializer(typeof(T), settings)).ReadObject(stream));
         }
 
         public static bool IsNetworkAvailable()
@@ -868,7 +775,7 @@ namespace OpenTween
 
         internal static bool _IsKeyDown(Keys modifierKeys, Keys[] targetKeys)
         {
-            foreach (Keys key in targetKeys)
+            foreach (var key in targetKeys)
             {
                 if ((modifierKeys & key) != key)
                 {
@@ -914,7 +821,7 @@ namespace OpenTween
         /// <returns>
         /// 生成されたバージョン番号の文字列
         /// </returns>
-        public static string GetReadableVersion(string versionStr = null)
+        public static string GetReadableVersion(string? versionStr = null)
         {
             var version = Version.Parse(versionStr ?? MyCommon.FileVersion);
 
@@ -1076,10 +983,10 @@ namespace OpenTween
         public static string UrlEncode(string stringToEncode)
         {
             const string UnreservedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~";
-            StringBuilder sb = new StringBuilder();
-            byte[] bytes = Encoding.UTF8.GetBytes(stringToEncode);
+            var sb = new StringBuilder();
+            var bytes = Encoding.UTF8.GetBytes(stringToEncode);
 
-            foreach (byte b in bytes)
+            foreach (var b in bytes)
             {
                 if (UnreservedChars.IndexOf((char)b) != -1)
                     sb.Append((char)b);
@@ -1088,5 +995,8 @@ namespace OpenTween
             }
             return sb.ToString();
         }
+
+        public static bool IsNullOrEmpty([NotNullWhen(false)] string? value)
+            => string.IsNullOrEmpty(value);
     }
 }

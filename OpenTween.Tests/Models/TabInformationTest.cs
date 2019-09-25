@@ -31,11 +31,11 @@ namespace OpenTween.Models
 {
     public class TabInformationTest
     {
-        private TabInformations tabinfo;
+        private readonly TabInformations tabinfo;
 
         public TabInformationTest()
         {
-            this.tabinfo = Activator.CreateInstance(typeof(TabInformations), true) as TabInformations;
+            this.tabinfo = (TabInformations)Activator.CreateInstance(typeof(TabInformations), true);
 
             // TabInformation.GetInstance() で取得できるようにする
             var field = typeof(TabInformations).GetField("_instance",
@@ -56,7 +56,7 @@ namespace OpenTween.Models
             var ret = this.tabinfo.AddTab(tab);
 
             Assert.True(ret);
-            Assert.Same(tab, this.tabinfo.Tabs.Values.Last());
+            Assert.Same(tab, this.tabinfo.Tabs.Last());
         }
 
         [Fact]
@@ -66,6 +66,19 @@ namespace OpenTween.Models
 
             Assert.False(ret);
         }
+
+        [Fact]
+        public void SelectTab_Test()
+        {
+            this.tabinfo.SelectTab("Reply");
+
+            Assert.Equal("Reply", this.tabinfo.SelectedTabName);
+            Assert.IsType<MentionsTabModel>(this.tabinfo.SelectedTab);
+        }
+
+        [Fact]
+        public void SelectTab_NotExistTest()
+            => Assert.Throws<ArgumentException>(() => this.tabinfo.SelectTab("INVALID"));
 
         [Fact]
         public void MakeTabName_Test()
@@ -390,7 +403,7 @@ namespace OpenTween.Models
         [Fact]
         public void SubmitUpdate_RemoveSubmit_Test()
         {
-            var homeTab = this.tabinfo.GetTabByType(MyCommon.TabUsageType.Home);
+            var homeTab = this.tabinfo.HomeTab;
 
             this.tabinfo.AddPost(new PostClass { StatusId = 100L });
             this.tabinfo.DistributePosts();
@@ -403,8 +416,7 @@ namespace OpenTween.Models
             // この時点ではまだ削除されない
             Assert.Equal(1, homeTab.AllCount);
 
-            this.tabinfo.SubmitUpdate(out var soundFile, out var notifyPosts,
-                out var newMentionOrDm, out var isDeletePost);
+            this.tabinfo.SubmitUpdate(out _, out _, out _, out var isDeletePost);
 
             Assert.True(isDeletePost);
             Assert.Equal(0, homeTab.AllCount);
@@ -414,8 +426,8 @@ namespace OpenTween.Models
         [Fact]
         public void SubmitUpdate_RemoveSubmit_NotOrphaned_Test()
         {
-            var homeTab = this.tabinfo.GetTabByType<HomeTabModel>();
-            var favTab = this.tabinfo.GetTabByType<FavoritesTabModel>();
+            var homeTab = this.tabinfo.HomeTab;
+            var favTab = this.tabinfo.FavoriteTab;
 
             this.tabinfo.AddPost(new PostClass { StatusId = 100L, IsFav = true });
             this.tabinfo.DistributePosts();
@@ -431,8 +443,7 @@ namespace OpenTween.Models
             Assert.Equal(1, homeTab.AllCount);
             Assert.Equal(1, favTab.AllCount);
 
-            this.tabinfo.SubmitUpdate(out var soundFile, out var notifyPosts,
-                out var newMentionOrDm, out var isDeletePost);
+            this.tabinfo.SubmitUpdate(out _, out _, out _, out var isDeletePost);
 
             Assert.True(isDeletePost);
             Assert.Equal(1, homeTab.AllCount);
@@ -445,15 +456,15 @@ namespace OpenTween.Models
         [Fact]
         public void SubmitUpdate_NotifyPriorityTest()
         {
-            var homeTab = this.tabinfo.GetTabByType(MyCommon.TabUsageType.Home);
+            var homeTab = this.tabinfo.HomeTab;
             homeTab.UnreadManage = true;
             homeTab.SoundFile = "home.wav";
 
-            var replyTab = this.tabinfo.GetTabByType(MyCommon.TabUsageType.Mentions);
+            var replyTab = this.tabinfo.MentionTab;
             replyTab.UnreadManage = true;
             replyTab.SoundFile = "reply.wav";
 
-            var dmTab = this.tabinfo.GetTabByType(MyCommon.TabUsageType.DirectMessage);
+            var dmTab = this.tabinfo.DirectMessageTab;
             dmTab.UnreadManage = true;
             dmTab.SoundFile = "dm.wav";
 
@@ -468,8 +479,7 @@ namespace OpenTween.Models
 
             this.tabinfo.DistributePosts();
 
-            this.tabinfo.SubmitUpdate(out var soundFile, out var notifyPosts,
-                out var newMentionOrDm, out var isDeletePost);
+            this.tabinfo.SubmitUpdate(out var soundFile, out var notifyPosts, out _, out _);
 
             // DM が最も優先度が高いため DM の通知音が再生される
             Assert.Equal("dm.wav", soundFile);
@@ -481,11 +491,11 @@ namespace OpenTween.Models
         [Fact]
         public void SubmitUpdate_IgnoreEmptySoundPath_Test()
         {
-            var homeTab = this.tabinfo.GetTabByType(MyCommon.TabUsageType.Home);
+            var homeTab = this.tabinfo.HomeTab;
             homeTab.UnreadManage = true;
             homeTab.SoundFile = "home.wav";
 
-            var replyTab = this.tabinfo.GetTabByType(MyCommon.TabUsageType.Mentions);
+            var replyTab = this.tabinfo.MentionTab;
             replyTab.UnreadManage = true;
             replyTab.SoundFile = "";
 
@@ -497,8 +507,7 @@ namespace OpenTween.Models
 
             this.tabinfo.DistributePosts();
 
-            this.tabinfo.SubmitUpdate(out var soundFile, out var notifyPosts,
-                out var newMentionOrDm, out var isDeletePost);
+            this.tabinfo.SubmitUpdate(out var soundFile, out var notifyPosts, out _, out _);
 
             // リプライの方が通知音の優先度が高いが、replyTab.SoundFile が空文字列なので次点の Recent の通知音を鳴らす
             Assert.Equal("home.wav", soundFile);
@@ -510,7 +519,7 @@ namespace OpenTween.Models
         [Fact]
         public void FilterAll_CopyFilterTest()
         {
-            var homeTab = this.tabinfo.GetTabByType(MyCommon.TabUsageType.Home);
+            var homeTab = this.tabinfo.HomeTab;
 
             var myTab1 = new FilterTabModel("MyTab1");
             this.tabinfo.AddTab(myTab1);
@@ -556,7 +565,7 @@ namespace OpenTween.Models
         [Fact]
         public void FilterAll_CopyAndMarkFilterTest()
         {
-            var homeTab = this.tabinfo.GetTabByType(MyCommon.TabUsageType.Home);
+            var homeTab = this.tabinfo.HomeTab;
 
             var myTab1 = new FilterTabModel("MyTab1");
             this.tabinfo.AddTab(myTab1);
@@ -599,13 +608,13 @@ namespace OpenTween.Models
             Assert.Equal(new[] { 200L }, myTab1.StatusIds);
 
             // [statusId: 200] は IsMark が true の状態になる
-            Assert.True(this.tabinfo[200L].IsMark);
+            Assert.True(this.tabinfo[200L]!.IsMark);
         }
 
         [Fact]
         public void FilterAll_MoveFilterTest()
         {
-            var homeTab = this.tabinfo.GetTabByType(MyCommon.TabUsageType.Home);
+            var homeTab = this.tabinfo.HomeTab;
 
             var myTab1 = new FilterTabModel("MyTab1");
             this.tabinfo.AddTab(myTab1);
@@ -650,7 +659,7 @@ namespace OpenTween.Models
         [Fact]
         public void FilterAll_MoveFilterTest2()
         {
-            var homeTab = this.tabinfo.GetTabByType(MyCommon.TabUsageType.Home);
+            var homeTab = this.tabinfo.HomeTab;
 
             var myTab1 = new FilterTabModel("MyTab1");
             var myTab2 = new FilterTabModel("MyTab2");
@@ -714,8 +723,8 @@ namespace OpenTween.Models
         [Fact]
         public void FilterAll_ExcludeReplyFilterTest()
         {
-            var homeTab = this.tabinfo.GetTabByType<HomeTabModel>();
-            var replyTab = this.tabinfo.GetTabByType<MentionsTabModel>();
+            var homeTab = this.tabinfo.HomeTab;
+            var replyTab = this.tabinfo.MentionTab;
 
             var filter = new PostFilterRule
             {
@@ -736,7 +745,7 @@ namespace OpenTween.Models
             Assert.Equal(new[] { 200L, 300L }, replyTab.StatusIds, AnyOrderComparer<long>.Instance);
 
             // [statusId: 100] は IsExcludeReply が true の状態になっている
-            Assert.True(this.tabinfo[100L].IsExcludeReply);
+            Assert.True(this.tabinfo[100L]!.IsExcludeReply);
 
             // Reply のフィルタを変更する
             filter.ExFilterName = "bbb";
@@ -755,10 +764,10 @@ namespace OpenTween.Models
             Assert.Equal(new[] { 100L, 300L }, replyTab.StatusIds, AnyOrderComparer<long>.Instance);
 
             // [statusId: 100] は IsExcludeReply が false の状態になる
-            Assert.False(this.tabinfo[100L].IsExcludeReply);
+            Assert.False(this.tabinfo[100L]!.IsExcludeReply);
 
             // [statusId: 200] は IsExcludeReply が true の状態になる
-            Assert.True(this.tabinfo[200L].IsExcludeReply);
+            Assert.True(this.tabinfo[200L]!.IsExcludeReply);
         }
 
         class TestPostFilterRule : PostFilterRule

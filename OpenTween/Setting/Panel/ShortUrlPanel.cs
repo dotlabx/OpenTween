@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -48,8 +50,6 @@ namespace OpenTween.Setting.Panel
 
             // 使われていない設定項目 (Tween v1.0.5.0)
             this.CheckAutoConvertUrl.Checked = false;
-            //this.CheckAutoConvertUrl.Checked = settingCommon.UrlConvertAuto;
-            //this.ShortenTcoCheck.Checked = settingCommon.ShortenTco;
             this.ShortenTcoCheck.Enabled = this.CheckAutoConvertUrl.Checked;
 
             this.ComboBoxAutoShortUrlFirst.SelectedIndex = (int)settingCommon.AutoShortUrlFirst;
@@ -61,7 +61,6 @@ namespace OpenTween.Setting.Panel
         {
             settingCommon.TinyUrlResolve = this.CheckTinyURL.Checked;
             settingCommon.UrlConvertAuto = this.CheckAutoConvertUrl.Checked;
-            //settingCommon.ShortenTco = this.ShortenTcoCheck.Checked;
             settingCommon.AutoShortUrlFirst = (MyCommon.UrlConverter)this.ComboBoxAutoShortUrlFirst.SelectedIndex;
             settingCommon.BitlyAccessToken = this.TextBitlyAccessToken.Text;
         }
@@ -88,32 +87,31 @@ namespace OpenTween.Setting.Panel
 
         private void ButtonBitlyAuthorize_Click(object sender, EventArgs e)
         {
-            using (var dialog = new LoginDialog())
+            using var dialog = new LoginDialog();
+
+            const string DialogText = "Bitly Login";
+            dialog.Text = DialogText;
+
+            string? accessToken = null;
+            dialog.LoginCallback = async () =>
             {
-                const string DialogText = "Bitly Login";
-                dialog.Text = DialogText;
-
-                string accessToken = null;
-                dialog.LoginCallback = async () =>
+                try
                 {
-                    try
-                    {
-                        var bitly = new BitlyApi();
-                        accessToken = await bitly.GetAccessTokenAsync(dialog.LoginName, dialog.Password);
-                        return true;
-                    }
-                    catch (WebApiException ex)
-                    {
-                        var text = string.Format(Properties.Resources.BitlyAuthorize_ErrorText, ex.Message);
-                        MessageBox.Show(dialog, text, DialogText, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return false;
-                    }
-                };
-
-                if (dialog.ShowDialog(this.ParentForm) == DialogResult.OK)
-                {
-                    this.TextBitlyAccessToken.Text = accessToken;
+                    var bitly = new BitlyApi();
+                    accessToken = await bitly.GetAccessTokenAsync(dialog.LoginName, dialog.Password);
+                    return true;
                 }
+                catch (WebApiException ex)
+                {
+                    var text = string.Format(Properties.Resources.BitlyAuthorize_ErrorText, ex.Message);
+                    MessageBox.Show(dialog, text, DialogText, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+            };
+
+            if (dialog.ShowDialog(this.ParentForm) == DialogResult.OK)
+            {
+                this.TextBitlyAccessToken.Text = accessToken;
             }
         }
     }

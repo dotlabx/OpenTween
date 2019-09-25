@@ -28,6 +28,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
+using OpenTween.Models;
 using Xunit;
 using Xunit.Extensions;
 
@@ -37,7 +38,7 @@ namespace OpenTween.Thumbnail.Services
     {
         class TestMetaThumbnailService : MetaThumbnailService
         {
-            public string FakeHtml { get; set; }
+            public string FakeHtml { get; set; } = "";
 
             public TestMetaThumbnailService(string urlPattern)
                 : base(null, urlPattern)
@@ -45,9 +46,7 @@ namespace OpenTween.Thumbnail.Services
             }
 
             protected override Task<string> FetchImageUrlAsync(string url, CancellationToken token)
-            {
-                return Task.FromResult(this.FakeHtml);
-            }
+                => Task.FromResult(this.FakeHtml);
         }
 
         [Fact]
@@ -68,10 +67,10 @@ namespace OpenTween.Thumbnail.Services
 </body>
 </html>
 ";
-            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", new PostClass(), CancellationToken.None);
 
             Assert.NotNull(thumbinfo);
-            Assert.Equal("http://example.com/abcd", thumbinfo.MediaPageUrl);
+            Assert.Equal("http://example.com/abcd", thumbinfo!.MediaPageUrl);
             Assert.Equal("http://img.example.com/abcd", thumbinfo.ThumbnailImageUrl);
             Assert.Null(thumbinfo.TooltipText);
         }
@@ -90,10 +89,10 @@ namespace OpenTween.Thumbnail.Services
 
 <p>hogehoge
 ";
-            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", new PostClass(), CancellationToken.None);
 
             Assert.NotNull(thumbinfo);
-            Assert.Equal("http://example.com/abcd", thumbinfo.MediaPageUrl);
+            Assert.Equal("http://example.com/abcd", thumbinfo!.MediaPageUrl);
             Assert.Equal("http://img.example.com/abcd", thumbinfo.ThumbnailImageUrl);
             Assert.Null(thumbinfo.TooltipText);
         }
@@ -112,10 +111,10 @@ namespace OpenTween.Thumbnail.Services
 
 <p>hogehoge
 ";
-            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", new PostClass(), CancellationToken.None);
 
             Assert.NotNull(thumbinfo);
-            Assert.Equal("http://example.com/abcd", thumbinfo.MediaPageUrl);
+            Assert.Equal("http://example.com/abcd", thumbinfo!.MediaPageUrl);
             Assert.Equal("http://img.example.com/abcd", thumbinfo.ThumbnailImageUrl);
             Assert.Null(thumbinfo.TooltipText);
         }
@@ -134,10 +133,10 @@ namespace OpenTween.Thumbnail.Services
 
 <p>hogehoge
 ";
-            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", new PostClass(), CancellationToken.None);
 
             Assert.NotNull(thumbinfo);
-            Assert.Equal("http://example.com/abcd", thumbinfo.MediaPageUrl);
+            Assert.Equal("http://example.com/abcd", thumbinfo!.MediaPageUrl);
             Assert.Equal("http://img.example.com/abcd", thumbinfo.ThumbnailImageUrl);
             Assert.Null(thumbinfo.TooltipText);
         }
@@ -157,10 +156,10 @@ namespace OpenTween.Thumbnail.Services
 
 <p>hogehoge
 ";
-            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", new PostClass(), CancellationToken.None);
 
             Assert.NotNull(thumbinfo);
-            Assert.Equal("http://example.com/abcd", thumbinfo.MediaPageUrl);
+            Assert.Equal("http://example.com/abcd", thumbinfo!.MediaPageUrl);
             Assert.Equal("http://img.example.com/abcd", thumbinfo.ThumbnailImageUrl);
             Assert.Null(thumbinfo.TooltipText);
         }
@@ -179,10 +178,10 @@ namespace OpenTween.Thumbnail.Services
 
 <p>hogehoge
 ";
-            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", new PostClass(), CancellationToken.None);
 
             Assert.NotNull(thumbinfo);
-            Assert.Equal("http://example.com/abcd", thumbinfo.MediaPageUrl);
+            Assert.Equal("http://example.com/abcd", thumbinfo!.MediaPageUrl);
             Assert.Equal("http://img.example.com/abcd", thumbinfo.ThumbnailImageUrl);
             Assert.Null(thumbinfo.TooltipText);
         }
@@ -201,10 +200,10 @@ namespace OpenTween.Thumbnail.Services
 
 <p>hogehoge
 ";
-            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", new PostClass(), CancellationToken.None);
 
             Assert.NotNull(thumbinfo);
-            Assert.Equal("http://example.com/abcd", thumbinfo.MediaPageUrl);
+            Assert.Equal("http://example.com/abcd", thumbinfo!.MediaPageUrl);
             Assert.Equal("http://img.example.com/abcd", thumbinfo.ThumbnailImageUrl);
             Assert.Null(thumbinfo.TooltipText);
         }
@@ -222,7 +221,7 @@ namespace OpenTween.Thumbnail.Services
 
 <p>hogehoge
 ";
-            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", null, CancellationToken.None);
+            var thumbinfo = await service.GetThumbnailInfoAsync("http://example.com/abcd", new PostClass(), CancellationToken.None);
 
             Assert.Null(thumbinfo);
         }

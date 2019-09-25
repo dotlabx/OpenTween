@@ -19,6 +19,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,7 +54,7 @@ namespace OpenTween.Setting
             if (settings.UserAccounts == null || settings.UserAccounts.Count == 0)
             {
                 settings.UserAccounts = new List<UserAccount>();
-                if (!string.IsNullOrEmpty(settings.UserName))
+                if (!MyCommon.IsNullOrEmpty(settings.UserName))
                 {
                     var account = new UserAccount
                     {

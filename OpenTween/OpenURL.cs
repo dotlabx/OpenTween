@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -37,7 +39,7 @@ namespace OpenTween
 {
     public partial class OpenURL : OTBaseForm
     {
-        private string _selUrl;
+        private string? _selUrl;
 
         public OpenURL()
             => this.InitializeComponent();
@@ -73,7 +75,7 @@ namespace OpenTween
             get
             {
                 if (UrlList.SelectedItems.Count == 1)
-                    return _selUrl;
+                    return _selUrl!;
                 else
                     return "";
             }
@@ -114,14 +116,14 @@ namespace OpenTween
             if (e.Control && e.KeyCode == Keys.Oem4)
             {
                 e.SuppressKeyPress = true;
-                Cancel_Button_Click(null, null);
+                Cancel_Button_Click(this.Cancel_Button, EventArgs.Empty);
             }
         }
     }
 
     public class OpenUrlItem
     {
-        private string _linkText;
+        private readonly string _linkText;
 
         public OpenUrlItem(string linkText, string url, string href)
         {

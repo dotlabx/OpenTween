@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -40,7 +42,7 @@ namespace OpenTween
 {
     public partial class ListManage : OTBaseForm
     {
-        private Twitter tw;
+        private readonly Twitter tw;
 
         public ListManage(Twitter tw)
         {
@@ -84,7 +86,7 @@ namespace OpenTween
         {
             if (this.ListsList.SelectedItem == null) return;
 
-            ListElement list = (ListElement) this.ListsList.SelectedItem;
+            var list = (ListElement) this.ListsList.SelectedItem;
             this.UsernameTextBox.Text = list.Username;
             this.NameTextBox.Text = list.Name;
             this.PublicRadioButton.Checked = list.IsPublic;
@@ -94,7 +96,7 @@ namespace OpenTween
             this.DescriptionText.Text = list.Description;
 
             this.UserList.Items.Clear();
-            foreach (UserInfo user in list.Members)
+            foreach (var user in list.Members)
                 this.UserList.Items.Add(user);
 
             this.GetMoreUsersButton.Text = this.UserList.Items.Count > 0 ? Properties.Resources.ListManageGetMoreUsers2 : Properties.Resources.ListManageGetMoreUsers1;
@@ -132,9 +134,9 @@ namespace OpenTween
 
             using (ControlTransaction.Disabled(this))
             {
-                ListElement listItem = (ListElement)this.ListsList.SelectedItem;
+                var listItem = (ListElement)this.ListsList.SelectedItem;
 
-                if (string.IsNullOrEmpty(this.NameTextBox.Text))
+                if (MyCommon.IsNullOrEmpty(this.NameTextBox.Text))
                 {
                     MessageBox.Show(Properties.Resources.ListManageOKButton1);
                     return;
@@ -155,7 +157,7 @@ namespace OpenTween
                 }
 
                 this.ListsList.Items.Clear();
-                this.ListManage_Load(null, EventArgs.Empty);
+                this.ListManage_Load(this, EventArgs.Empty);
 
                 this.EditCheckBox.AutoCheck = true;
                 this.EditCheckBox.Checked = false;
@@ -167,7 +169,7 @@ namespace OpenTween
             this.EditCheckBox.AutoCheck = true;
             this.EditCheckBox.Checked = false;
 
-            for (int i = this.ListsList.Items.Count - 1; i >= 0; i--)
+            for (var i = this.ListsList.Items.Count - 1; i >= 0; i--)
                 if (this.ListsList.Items[i] is NewListElement)
                     this.ListsList.Items.RemoveAt(i);
 
@@ -227,8 +229,8 @@ namespace OpenTween
 
             using (ControlTransaction.Disabled(this))
             {
-                ListElement list = (ListElement)this.ListsList.SelectedItem;
-                UserInfo user = (UserInfo)this.UserList.SelectedItem;
+                var list = (ListElement)this.ListsList.SelectedItem;
+                var user = (UserInfo)this.UserList.SelectedItem;
                 if (MessageBox.Show(Properties.Resources.ListManageDeleteUser1, ApplicationSettings.ApplicationName, MessageBoxButtons.OKCancel) == DialogResult.OK)
                 {
                     try
@@ -242,7 +244,7 @@ namespace OpenTween
                         return;
                     }
 
-                    int idx = ListsList.SelectedIndex;
+                    var idx = ListsList.SelectedIndex;
                     list.Members.Remove(user);
                     this.ListsList_SelectedIndexChanged(this.ListsList, EventArgs.Empty);
                     if (idx < ListsList.Items.Count) ListsList.SelectedIndex = idx;
@@ -256,7 +258,7 @@ namespace OpenTween
 
             using (ControlTransaction.Disabled(this))
             {
-                ListElement list = (ListElement)this.ListsList.SelectedItem;
+                var list = (ListElement)this.ListsList.SelectedItem;
 
                 if (MessageBox.Show(Properties.Resources.ListManageDeleteLists1, ApplicationSettings.ApplicationName, MessageBoxButtons.OKCancel) == DialogResult.OK)
                 {
@@ -288,7 +290,7 @@ namespace OpenTween
 
         private void AddListButton_Click(object sender, EventArgs e)
         {
-            NewListElement newList = new NewListElement(this.tw);
+            var newList = new NewListElement(this.tw);
             this.ListsList.Items.Add(newList);
             this.ListsList.SelectedItem = newList;
             this.EditCheckBox.Checked = true;
@@ -313,14 +315,14 @@ namespace OpenTween
             }
             else
             {
-                UserInfo user = (UserInfo)this.UserList.SelectedItem;
+                var user = (UserInfo)this.UserList.SelectedItem;
                 this.UserLocation.Text = user.Location;
                 this.UserWeb.Text = user.Url;
                 this.UserFollowNum.Text = user.FriendsCount.ToString("#,###,##0");
                 this.UserFollowerNum.Text = user.FollowersCount.ToString("#,###,##0");
                 this.UserPostsNum.Text = user.StatusesCount.ToString("#,###,##0");
                 this.UserProfile.Text = user.Description;
-                if (!String.IsNullOrEmpty(user.RecentPost))
+                if (!MyCommon.IsNullOrEmpty(user.RecentPost))
                 {
                     this.UserTweetDateTime.Text = user.PostCreatedAt.ToLocalTimeString("yy/MM/dd HH:mm");
                     this.UserTweet.Text = user.RecentPost;
@@ -332,7 +334,8 @@ namespace OpenTween
                 }
                 this.DeleteUserButton.Enabled = true;
 
-                await this.LoadUserIconAsync(user.ImageUrl, user.Id);
+                if (user.ImageUrl != null)
+                    await this.LoadUserIconAsync(user.ImageUrl, user.Id);
             }
         }
 
@@ -346,20 +349,18 @@ namespace OpenTween
             {
                 var uri = imageUri.AbsoluteUri.Replace("_normal", "_bigger");
 
-                using (var imageStream = await Networking.Http.GetStreamAsync(uri))
+                using var imageStream = await Networking.Http.GetStreamAsync(uri);
+                var image = await MemoryImage.CopyFromStreamAsync(imageStream);
+
+                // 画像の読み込み中に選択中のユーザーが変化していたらキャンセルとして扱う
+                var selectedUser = (UserInfo)this.UserList.SelectedItem;
+                if (selectedUser.Id != userId)
                 {
-                    var image = await MemoryImage.CopyFromStreamAsync(imageStream);
-
-                    // 画像の読み込み中に選択中のユーザーが変化していたらキャンセルとして扱う
-                    var selectedUser = (UserInfo)this.UserList.SelectedItem;
-                    if (selectedUser.Id != userId)
-                    {
-                        image.Dispose();
-                        throw new OperationCanceledException();
-                    }
-
-                    return image;
+                    image.Dispose();
+                    throw new OperationCanceledException();
                 }
+
+                return image;
             });
         }
 
@@ -382,15 +383,13 @@ namespace OpenTween
 
         private async Task<IReadOnlyList<ListElement>> FetchListsAsync()
         {
-            using (var dialog = new WaitingDialog(Properties.Resources.ListsGetting))
-            {
-                var cancellationToken = dialog.EnableCancellation();
+            using var dialog = new WaitingDialog(Properties.Resources.ListsGetting);
+            var cancellationToken = dialog.EnableCancellation();
 
-                var task = this.tw.GetListsApi();
-                await dialog.WaitForAsync(this, task);
+            var task = this.tw.GetListsApi();
+            await dialog.WaitForAsync(this, task);
 
-                cancellationToken.ThrowIfCancellationRequested();
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
             return TabInformations.GetInstance().SubscribableLists;
         }

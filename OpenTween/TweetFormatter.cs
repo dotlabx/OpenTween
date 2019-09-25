@@ -19,6 +19,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -35,7 +37,7 @@ namespace OpenTween
     /// </summary>
     public static class TweetFormatter
     {
-        public static string AutoLinkHtml(string text, IEnumerable<TwitterEntity> entities, bool keepTco = false)
+        public static string AutoLinkHtml(string text, IEnumerable<TwitterEntity>? entities, bool keepTco = false)
         {
             if (entities == null)
                 entities = Enumerable.Empty<TwitterEntity>();
@@ -166,13 +168,16 @@ namespace OpenTween
             if (!SettingManager.Local.UseTwemoji)
                 return t(e(targetText));
 
+            if (MyCommon.IsNullOrEmpty(entity.Url))
+                return "";
+
             return "<img class=\"emoji\" src=\"" + e(entity.Url) + "\" alt=\"" + e(entity.Text) + "\" />";
         }
 
         // 長いのでエイリアスとして e(...), eu(...), t(...) でエスケープできるようにする
-        private static Func<string, string> e = EscapeHtml;
-        private static Func<string, string> eu = Uri.EscapeDataString;
-        private static Func<string, string> t = FilterText;
+        private static readonly Func<string, string> e = EscapeHtml;
+        private static readonly Func<string, string> eu = Uri.EscapeDataString;
+        private static readonly Func<string, string> t = FilterText;
 
         private static string EscapeHtml(string text)
         {

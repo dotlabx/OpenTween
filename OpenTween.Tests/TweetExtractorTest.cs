@@ -228,6 +228,24 @@ namespace OpenTween
         }
 
         [Fact]
+        public void ExtractEmojiEntities_VariationSelector_UnnecessaryEmojiStyleTest()
+        {
+            // 余分な U+FE0F が付いている場合
+            var origText = "🍣\uFE0F"; // U+1F363 + U+FE0F (emoji style)
+            var entities = TweetExtractor.ExtractEmojiEntities(origText).ToArray();
+
+            Assert.Equal(2, entities.Length);
+
+            Assert.Equal(new[] { 0, 1 }, entities[0].Indices);
+            Assert.Equal("🍣", entities[0].Text);
+            Assert.Equal("https://twemoji.maxcdn.com/2/72x72/1f363.png", entities[0].Url);
+
+            Assert.Equal(new[] { 1, 2 }, entities[1].Indices);
+            Assert.Equal("", entities[1].Text);
+            Assert.Equal("", entities[1].Url);
+        }
+
+        [Fact]
         public void ExtractEmojiEntities_CombiningCharacterTest()
         {
             var origText = "#⃣"; // U+0023 U+20E3 (合字)
@@ -260,6 +278,18 @@ namespace OpenTween
             Assert.Equal(new[] { 0, 1 }, entity.Indices);
             Assert.Equal("🦸", entity.Text);
             Assert.Equal("https://twemoji.maxcdn.com/2/72x72/1f9b8.png", entity.Url);
+        }
+
+        [Fact]
+        public void ExtractEmojiEntities_Unicode12Test()
+        {
+            // Unicode 12.0 で追加された絵文字
+            var origText = "🧅"; // U+1F9C5 (ONION)
+            var entity = TweetExtractor.ExtractEmojiEntities(origText).Single();
+
+            Assert.Equal(new[] { 0, 1 }, entity.Indices);
+            Assert.Equal("🧅", entity.Text);
+            Assert.Equal("https://twemoji.maxcdn.com/2/72x72/1f9c5.png", entity.Url);
         }
 
         [Fact]

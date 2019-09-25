@@ -19,6 +19,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -44,8 +46,8 @@ namespace OpenTween
 
         protected internal class TabListItem
         {
-            public TabModel Tab { get; set; }
-            public string Label { get; set; }
+            public FilterTabModel? Tab { get; set; }
+            public string Label { get; set; } = "";
 
             public override string ToString()
                 => this.Label;
@@ -78,13 +80,13 @@ namespace OpenTween
                 });
             }
 
-            foreach (var (name, tab) in this.TabInfo.Tabs)
-            {
-                if (!tab.IsDistributableTabType) continue;
+            var tabs = this.TabInfo.Tabs.Append(this.TabInfo.MuteTab);
 
+            foreach (var tab in tabs.OfType<FilterTabModel>())
+            {
                 this.TabList.Items.Add(new TabListItem
                 {
-                    Label = name,
+                    Label = tab.TabName,
                     Tab = tab,
                 });
             }
@@ -106,13 +108,14 @@ namespace OpenTween
                 this.OK_Button.Enabled = true;
         }
 
-        public TabModel SelectedTab
+        public FilterTabModel? SelectedTab
             => this.TabList.SelectedItem is TabListItem item ? item.Tab : null;
 
-        public TabModel[] SelectedTabs
+        public FilterTabModel[] SelectedTabs
             => this.TabList.SelectedItems
                     .Cast<TabListItem>()
                     .Select(x => x.Tab)
+                    .OfType<FilterTabModel>()
                     .ToArray();
     }
 }

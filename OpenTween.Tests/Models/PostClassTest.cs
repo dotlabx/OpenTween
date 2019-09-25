@@ -38,18 +38,16 @@ namespace OpenTween.Models
             {
                 get
                 {
-                    var retweetedId = this.RetweetedId.Value;
+                    var retweetedId = this.RetweetedId!.Value;
 
-                    return PostClassTest.TestCases.ContainsKey(retweetedId) ?
-                        PostClassTest.TestCases[retweetedId] :
-                        null;
+                    return PostClassTest.TestCases[retweetedId];
                 }
             }
         }
 
         private static Dictionary<long, PostClass> TestCases;
 
-        public PostClassTest()
+        static PostClassTest()
         {
             PostClassTest.TestCases = new Dictionary<long, PostClass>
             {
@@ -69,7 +67,6 @@ namespace OpenTween.Models
         }
 
         [Theory]
-        [InlineData(null,  null)]
         [InlineData("", "")]
         [InlineData("aaa\nbbb", "aaa bbb")]
         public void TextSingleLineTest(string text, string expected)
@@ -84,9 +81,7 @@ namespace OpenTween.Models
         [InlineData(2L, true)]
         [InlineData(3L, true)]
         public void GetIsFavTest(long statusId, bool expected)
-        {
-            Assert.Equal(expected, PostClassTest.TestCases[statusId].IsFav);
-        }
+            => Assert.Equal(expected, PostClassTest.TestCases[statusId].IsFav);
 
         [Theory]
         [InlineData(2L, true)]
@@ -386,7 +381,7 @@ namespace OpenTween.Models
 
         class FakeExpandedUrlInfo : PostClass.ExpandedUrlInfo
         {
-            public TaskCompletionSource<string> fakeResult;
+            public TaskCompletionSource<string> fakeResult = new TaskCompletionSource<string>();
 
             public FakeExpandedUrlInfo(string url, string expandedUrl, bool deepExpand)
                 : base(url, expandedUrl, deepExpand)
@@ -394,10 +389,7 @@ namespace OpenTween.Models
             }
 
             protected override async Task DeepExpandAsync()
-            {
-                this.fakeResult = new TaskCompletionSource<string>();
-                this._expandedUrl = await this.fakeResult.Task;
-            }
+                => this._expandedUrl = await this.fakeResult.Task;
         }
 
         [Fact]

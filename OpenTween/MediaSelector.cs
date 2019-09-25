@@ -19,6 +19,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -31,22 +33,23 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using OpenTween.Api.DataModel;
 using OpenTween.Connection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace OpenTween
 {
     public partial class MediaSelector : UserControl
     {
-        public event EventHandler<EventArgs> BeginSelecting;
-        public event EventHandler<EventArgs> EndSelecting;
+        public event EventHandler<EventArgs>? BeginSelecting;
+        public event EventHandler<EventArgs>? EndSelecting;
 
-        public event EventHandler<EventArgs> FilePickDialogOpening;
-        public event EventHandler<EventArgs> FilePickDialogClosed;
+        public event EventHandler<EventArgs>? FilePickDialogOpening;
+        public event EventHandler<EventArgs>? FilePickDialogClosed;
 
-        public event EventHandler<EventArgs> SelectedServiceChanged;
+        public event EventHandler<EventArgs>? SelectedServiceChanged;
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public OpenFileDialog FilePickDialog { get; set; }
+        public OpenFileDialog? FilePickDialog { get; set; }
 
         /// <summary>
         /// 選択されている投稿先名を取得する。
@@ -69,12 +72,12 @@ namespace OpenTween
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public IMediaUploadService SelectedService
+        public IMediaUploadService? SelectedService
         {
             get
             {
                 var serviceName = this.ServiceName;
-                if (string.IsNullOrEmpty(serviceName))
+                if (MyCommon.IsNullOrEmpty(serviceName))
                     return null;
 
                 return this.pictureService.TryGetValue(serviceName, out var service)
@@ -99,11 +102,11 @@ namespace OpenTween
 
         private class SelectedMedia
         {
-            public IMediaItem Item { get; set; }
+            public IMediaItem? Item { get; set; }
             public MyCommon.UploadFileType Type { get; set; }
             public string Text { get; set; }
 
-            public SelectedMedia(IMediaItem item, MyCommon.UploadFileType type, string text)
+            public SelectedMedia(IMediaItem? item, MyCommon.UploadFileType type, string text)
             {
                 this.Item = item;
                 this.Type = type;
@@ -127,16 +130,15 @@ namespace OpenTween
                 => this.Text;
         }
 
-        private Dictionary<string, IMediaUploadService> pictureService;
+        private Dictionary<string, IMediaUploadService> pictureService = new Dictionary<string, IMediaUploadService>();
 
         private void CreateServices(Twitter tw, TwitterConfiguration twitterConfig)
         {
             this.pictureService?.Clear();
-            this.pictureService = null;
 
             this.pictureService = new Dictionary<string, IMediaUploadService> {
                 ["Twitter"] = new TwitterPhoto(tw, twitterConfig),
-                ["Imgur"] = new Imgur(tw, twitterConfig),
+                ["Imgur"] = new Imgur(twitterConfig),
                 ["Mobypicture"] = new Mobypicture(tw, twitterConfig),
             };
         }
@@ -176,9 +178,9 @@ namespace OpenTween
         /// </summary>
         public bool HasUploadableService(string fileName, bool ignoreSize)
         {
-            FileInfo fl = new FileInfo(fileName);
-            string ext = fl.Extension;
-            long? size = ignoreSize ? (long?)null : fl.Length;
+            var fl = new FileInfo(fileName);
+            var ext = fl.Extension;
+            var size = ignoreSize ? (long?)null : fl.Length;
 
             if (IsUploadable(this.ServiceName, ext, size))
                 return true;
@@ -198,7 +200,7 @@ namespace OpenTween
         /// </summary>
         private bool IsUploadable(string serviceName, string ext, long? size)
         {
-            if (!string.IsNullOrEmpty(serviceName))
+            if (!MyCommon.IsNullOrEmpty(serviceName))
             {
                 var imageService = this.pictureService[serviceName];
                 if (imageService.CheckFileExtension(ext))
@@ -247,7 +249,7 @@ namespace OpenTween
             }
             else
             {
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
                     var index = ImagePageCombo.Items.Count - 1;
                     if (index == 0)
@@ -330,7 +332,7 @@ namespace OpenTween
         /// <summary>
         /// 選択された投稿先名と投稿する MediaItem を取得する。MediaItem は不要になったら呼び出し側にて破棄すること。
         /// </summary>
-        public bool TryGetSelectedMedia(out string imageService, out IMediaItem[] mediaItems)
+        public bool TryGetSelectedMedia([NotNullWhen(true)] out string? imageService, [NotNullWhen(true)] out IMediaItem[]? mediaItems)
         {
             var validItems = ImagePageCombo.Items.Cast<SelectedMedia>()
                              .Where(x => x.IsValid).Select(x => x.Item).OfType<IMediaItem>().ToArray();
@@ -369,11 +371,11 @@ namespace OpenTween
             return false;
         }
 
-        private MemoryImageMediaItem CreateMemoryImageMediaItem(Image image, bool noMsgBox)
+        private MemoryImageMediaItem? CreateMemoryImageMediaItem(Image image, bool noMsgBox)
         {
             if (image == null) return null;
 
-            MemoryImage memoryImage = null;
+            MemoryImage? memoryImage = null;
             try
             {
                 // image から png 形式の MemoryImage を生成
@@ -390,9 +392,9 @@ namespace OpenTween
             }
         }
 
-        private IMediaItem CreateFileMediaItem(string path, bool noMsgBox)
+        private IMediaItem? CreateFileMediaItem(string path, bool noMsgBox)
         {
-            if (string.IsNullOrEmpty(path)) return null;
+            if (MyCommon.IsNullOrEmpty(path)) return null;
 
             try
             {
@@ -426,7 +428,7 @@ namespace OpenTween
             ImageFromSelectedFile(item, noMsgBox);
         }
 
-        private void DisposeMediaItem(IMediaItem item)
+        private void DisposeMediaItem(IMediaItem? item)
         {
             var disposableItem = item as IDisposable;
             disposableItem?.Dispose();
@@ -466,10 +468,10 @@ namespace OpenTween
             ValidateNewFileMediaItem(ImagefilePathText.Text.Trim(), AlternativeTextBox.Text.Trim(), false);
         }
 
-        private void ImageFromSelectedFile(IMediaItem item, bool noMsgBox)
+        private void ImageFromSelectedFile(IMediaItem? item, bool noMsgBox)
             => this.ImageFromSelectedFile(-1, item, noMsgBox);
 
-        private void ImageFromSelectedFile(int index, IMediaItem item, bool noMsgBox)
+        private void ImageFromSelectedFile(int index, IMediaItem? item, bool noMsgBox)
         {
             var valid = false;
 
@@ -489,7 +491,7 @@ namespace OpenTween
                 if (isSelectedPage)
                     this.ClearImageSelectedPicture();
 
-                if (item == null || string.IsNullOrEmpty(item.Path)) return;
+                if (item == null || MyCommon.IsNullOrEmpty(item.Path)) return;
 
                 try
                 {
@@ -561,11 +563,11 @@ namespace OpenTween
             var text = string.Join(", ",
                 ImageServiceCombo.Items.Cast<string>()
                     .Where(serviceName =>
-                        !string.IsNullOrEmpty(serviceName) &&
+                        !MyCommon.IsNullOrEmpty(serviceName) &&
                         this.pictureService[serviceName].CheckFileExtension(ext) &&
                         this.pictureService[serviceName].CheckFileSize(ext, fileSize)));
 
-            if (string.IsNullOrEmpty(text))
+            if (MyCommon.IsNullOrEmpty(text))
                 return Properties.Resources.PostPictureWarn6;
 
             return text;
@@ -612,7 +614,7 @@ namespace OpenTween
         {
             using (ControlTransaction.Update(ImageServiceCombo))
             {
-                string svc = "";
+                var svc = "";
                 if (ImageServiceCombo.SelectedIndex > -1) svc = ImageServiceCombo.Text;
                 ImageServiceCombo.Items.Clear();
 
@@ -629,7 +631,7 @@ namespace OpenTween
         private void SelectImageServiceComboItem(string svc, int? index = null)
         {
             int idx;
-            if (string.IsNullOrEmpty(svc))
+            if (MyCommon.IsNullOrEmpty(svc))
             {
                 idx = index ?? 0;
             }
@@ -655,7 +657,11 @@ namespace OpenTween
         }
 
         private void UpdateAltTextPanelVisible()
-            => this.AlternativeTextPanel.Visible = this.SelectedService.CanUseAltText;
+            => this.AlternativeTextPanel.Visible = this.SelectedService switch
+            {
+                null => false,
+                var service => service.CanUseAltText,
+            };
 
         private void ImageServiceCombo_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -719,7 +725,7 @@ namespace OpenTween
             this.SelectedServiceChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        private void SetImagePageCombo(SelectedMedia media = null)
+        private void SetImagePageCombo(SelectedMedia? media = null)
         {
             using (ControlTransaction.Update(ImagePageCombo))
             {

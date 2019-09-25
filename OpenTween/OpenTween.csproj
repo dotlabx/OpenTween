@@ -9,6 +9,7 @@
     <RootNamespace>OpenTween</RootNamespace>
     <AssemblyName>OpenTween</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <LangVersion>8.0</LangVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -154,6 +155,7 @@
     <Compile Include="Models\FilterTabModel.cs" />
     <Compile Include="Models\HomeTabModel.cs" />
     <Compile Include="Models\InternalStorageTabModel.cs" />
+    <Compile Include="Models\IReadOnlyTabCollection.cs" />
     <Compile Include="Models\ListTimelineTabModel.cs" />
     <Compile Include="Models\LocalSearchTabModel.cs" />
     <Compile Include="Models\MediaInfo.cs" />
@@ -162,12 +164,14 @@
     <Compile Include="Models\PostClass.cs" />
     <Compile Include="Models\PublicSearchTabModel.cs" />
     <Compile Include="Models\RelatedPostsTabModel.cs" />
+    <Compile Include="Models\TabCollection.cs" />
     <Compile Include="Models\TabModel.cs" />
     <Compile Include="Models\TabInformations.cs" />
     <Compile Include="Models\TabUsageTypeExt.cs" />
     <Compile Include="Models\UserTimelineTabModel.cs" />
     <Compile Include="MouseWheelMessageFilter.cs" />
     <Compile Include="NotifyPropertyChangedBase.cs" />
+    <Compile Include="NullableAttributes.cs" />
     <Compile Include="PostStatusParams.cs" />
     <Compile Include="ReaderWriterLockTransaction.cs" />
     <Compile Include="SendErrorReportForm.cs">
@@ -180,6 +184,7 @@
     <Compile Include="ShortcutCommand.cs" />
     <Compile Include="ThrottlingTimer.cs" />
     <Compile Include="Thumbnail\Services\PbsTwimgCom.cs" />
+    <Compile Include="TimelineScheduler.cs" />
     <Compile Include="TweetDetailsView.cs">
       <SubType>UserControl</SubType>
     </Compile>

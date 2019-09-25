@@ -25,6 +25,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -41,8 +43,8 @@ namespace OpenTween.Models
 
         public bool FilterModified { get; set; }
 
-        private List<PostFilterRule> _filters = new List<PostFilterRule>();
-        private object lockObjFilters = new object();
+        private readonly List<PostFilterRule> _filters = new List<PostFilterRule>();
+        private readonly object lockObjFilters = new object();
 
         public FilterTabModel(string tabName) : base(tabName)
         {
@@ -170,7 +172,7 @@ namespace OpenTween.Models
 
         public override Task RefreshAsync(Twitter tw, bool backward, bool startup, IProgress<string> progress)
         {
-            var homeTab = TabInformations.GetInstance().GetTabByType<HomeTabModel>();
+            var homeTab = TabInformations.GetInstance().HomeTab;
 
             return homeTab.RefreshAsync(tw, backward, startup, progress);
         }

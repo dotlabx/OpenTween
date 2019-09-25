@@ -19,6 +19,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -44,12 +46,12 @@ namespace OpenTween
         protected internal List<OTPictureBox> pictureBox = new List<OTPictureBox>();
         protected MouseWheelMessageFilter filter = new MouseWheelMessageFilter();
 
-        public event EventHandler<EventArgs> ThumbnailLoading;
-        public event EventHandler<ThumbnailDoubleClickEventArgs> ThumbnailDoubleClick;
-        public event EventHandler<ThumbnailImageSearchEventArgs> ThumbnailImageSearchClick;
+        public event EventHandler<EventArgs>? ThumbnailLoading;
+        public event EventHandler<ThumbnailDoubleClickEventArgs>? ThumbnailDoubleClick;
+        public event EventHandler<ThumbnailImageSearchEventArgs>? ThumbnailImageSearchClick;
 
         public ThumbnailInfo Thumbnail
-            => this.pictureBox[this.scrollBar.Value].Tag as ThumbnailInfo;
+            => (ThumbnailInfo)this.pictureBox[this.scrollBar.Value].Tag;
 
         public TweetThumbnail()
             => this.InitializeComponent();
@@ -79,7 +81,7 @@ namespace OpenTween
             if (thumbnails.Length == 0)
                 return;
 
-            for (int i = 0; i < thumbnails.Length; i++)
+            for (var i = 0; i < thumbnails.Length; i++)
             {
                 var thumb = thumbnails[i];
                 var picbox = this.pictureBox[i];
@@ -91,7 +93,7 @@ namespace OpenTween
                 loadTasks.Add(loadTask);
 
                 var tooltipText = thumb.TooltipText;
-                if (!string.IsNullOrEmpty(tooltipText))
+                if (!MyCommon.IsNullOrEmpty(tooltipText))
                 {
                     this.toolTip.SetToolTip(picbox, tooltipText);
                     picbox.AccessibleDescription = tooltipText;
@@ -152,7 +154,7 @@ namespace OpenTween
                 this.scrollBar.Maximum = (count > 0) ? count - 1 : 0;
                 this.scrollBar.Value = 0;
 
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
                     var picbox = CreatePictureBox("pictureBox" + i);
                     picbox.Visible = (i == 0);

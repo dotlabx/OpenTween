@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,9 +48,9 @@ namespace OpenTween
         /// XML に含まれていた場合に破棄せず保持するため必要となる。
         /// </remarks>
         [XmlAnyElement]
-        public XmlElement[] ExtraElements;
+        public XmlElement[] ExtraElements = Array.Empty<XmlElement>();
 
-        private static object lockObj = new object();
+        private static readonly object lockObj = new object();
 
         protected static T LoadSettings(string FileId)
         {
@@ -62,13 +64,11 @@ namespace OpenTween
 
                 lock (lockObj)
                 {
-                    using (FileStream fs = new FileStream(settingFilePath, FileMode.Open, FileAccess.Read))
-                    {
-                        fs.Position = 0;
-                        XmlSerializer xs = new XmlSerializer(typeof(T));
-                        T instance = (T)xs.Deserialize(fs);
-                        return instance;
-                    }
+                    using var fs = new FileStream(settingFilePath, FileMode.Open, FileAccess.Read);
+                    fs.Position = 0;
+                    var xs = new XmlSerializer(typeof(T));
+                    var instance = (T)xs.Deserialize(fs);
+                    return instance;
                 }
             }
             catch (FileNotFoundException)
@@ -77,7 +77,7 @@ namespace OpenTween
             }
             catch (Exception)
             {
-                string backupFile = Path.Combine(
+                var backupFile = Path.Combine(
                         Path.Combine(
                             Application.StartupPath,
                             ApplicationSettings.AssemblyName + "Backup1st"),
@@ -88,14 +88,12 @@ namespace OpenTween
                     {
                         lock (lockObj)
                         {
-                            using (FileStream fs = new FileStream(backupFile, FileMode.Open, FileAccess.Read))
-                            {
-                                fs.Position = 0;
-                                XmlSerializer xs = new XmlSerializer(typeof(T));
-                                T instance = (T)xs.Deserialize(fs);
-                                MessageBox.Show("File: " + GetSettingFilePath(FileId) + Environment.NewLine + "Use old setting file, because application can't read this setting file.");
-                                return instance;
-                            }
+                            using var fs = new FileStream(backupFile, FileMode.Open, FileAccess.Read);
+                            fs.Position = 0;
+                            var xs = new XmlSerializer(typeof(T));
+                            var instance = (T)xs.Deserialize(fs);
+                            MessageBox.Show("File: " + GetSettingFilePath(FileId) + Environment.NewLine + "Use old setting file, because application can't read this setting file.");
+                            return instance;
                         }
                     }
                     catch (Exception)
@@ -104,11 +102,6 @@ namespace OpenTween
                 }
                 MessageBox.Show("File: " + GetSettingFilePath(FileId) + Environment.NewLine + "Use default setting, because application can't read this setting file.");
                 return new T();
-                //ex.Data.Add("FilePath", GetSettingFilePath(FileId));
-                //FileInfo fi = new IO.FileInfo(GetSettingFilePath(FileId));
-                //ex.Data.Add("FileSize", fi.Length.ToString());
-                //ex.Data.Add("FileData", File.ReadAllText(GetSettingFilePath(FileId)));
-                //throw;
             }
         }
 
@@ -123,7 +116,7 @@ namespace OpenTween
                 return;
 
             var retryCount = 0;
-            Exception lastException = null;
+            Exception? lastException = null;
 
             var filePath = GetSettingFilePath(fileId);
             do

@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -41,8 +43,8 @@ namespace OpenTween
 {
     public partial class MyLists : OTBaseForm
     {
-        private readonly TwitterApi twitterApi;
-        private readonly string contextScreenName;
+        private readonly TwitterApi twitterApi = null!;
+        private readonly string contextScreenName = null!;
 
         /// <summary>自分が所有しているリスト</summary>
         private ListElement[] ownedLists = Array.Empty<ListElement>();
@@ -93,7 +95,7 @@ namespace OpenTween
                 this.twitterApi.ListsOwnerships(this.twitterApi.CurrentScreenName, cursor: x, count: 1000))
                     .ConfigureAwait(false);
 
-            this.ownedLists = ownedListData.Select(x => new ListElement(x, null)).ToArray();
+            this.ownedLists = ownedListData.Select(x => new ListElement(x, null!)).ToArray();
 
             var listsUserAddedTo = await TwitterLists.GetAllItemsAsync(x =>
                 this.twitterApi.ListsMemberships(this.contextScreenName, cursor: x, count: 1000, filterToOwnedLists: true))
@@ -177,7 +179,7 @@ namespace OpenTween
             {
                 case MouseButtons.Left:
                     //項目が無い部分をクリックしても、選択されている項目のチェック状態が変更されてしまうので、その対策
-                    for (int index = 0; index < this.ListsCheckedListBox.Items.Count; index++)
+                    for (var index = 0; index < this.ListsCheckedListBox.Items.Count; index++)
                     {
                         if (this.ListsCheckedListBox.GetItemRectangle(index).Contains(e.Location))
                             return;
@@ -186,7 +188,7 @@ namespace OpenTween
                     break;
                 case MouseButtons.Right:
                     //コンテキストメニューの項目実行時にSelectedItemプロパティを利用出来るように
-                    for (int index = 0; index < this.ListsCheckedListBox.Items.Count; index++)
+                    for (var index = 0; index < this.ListsCheckedListBox.Items.Count; index++)
                     {
                         if (this.ListsCheckedListBox.GetItemRectangle(index).Contains(e.Location))
                         {

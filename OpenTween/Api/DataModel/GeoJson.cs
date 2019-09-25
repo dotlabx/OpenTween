@@ -19,6 +19,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable annotations
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,9 +44,7 @@ namespace OpenTween.Api.DataModel
         public double[] Coordinates { get; set; }
 
         public GeoJsonPoint()
-        {
-            this.Type = "Point";
-        }
+            => this.Type = "Point";
     }
 
     [DataContract]
@@ -54,8 +54,6 @@ namespace OpenTween.Api.DataModel
         public double[][][] Coordinates { get; set; }
 
         public GeoJsonPolygon()
-        {
-            this.Type = "Polygon";
-        }
+            => this.Type = "Polygon";
     }
 }

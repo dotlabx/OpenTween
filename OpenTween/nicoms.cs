@@ -24,13 +24,15 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 
 namespace OpenTween
 {
     public static class nicoms
     {
-        private static string[] _nicovideo =
+        private static readonly string[] _nicovideo =
         {
             "www.nicovideo.jp/watch/",
             "live.nicovideo.jp/watch/",

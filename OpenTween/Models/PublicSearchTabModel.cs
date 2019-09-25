@@ -25,6 +25,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,7 +70,7 @@ namespace OpenTween.Models
 
         public override async Task RefreshAsync(Twitter tw, bool backward, bool startup, IProgress<string> progress)
         {
-            if (string.IsNullOrEmpty(this.SearchWords))
+            if (MyCommon.IsNullOrEmpty(this.SearchWords))
                 return;
 
             bool read;

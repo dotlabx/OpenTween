@@ -19,6 +19,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -47,7 +49,7 @@ namespace OpenTween.Models
         /// コンパイルされた振り分けルール
         /// </summary>
         [XmlIgnore]
-        protected Func<PostClass, MyCommon.HITRESULT> FilterDelegate;
+        protected Func<PostClass, MyCommon.HITRESULT>? FilterDelegate;
 
         /// <summary>
         /// 振り分けルールの概要
@@ -72,20 +74,20 @@ namespace OpenTween.Models
         private bool _enabled;
 
         [XmlElement("NameFilter")]
-        public string FilterName
+        public string? FilterName
         {
             get => this._FilterName;
             set => this.SetProperty(ref this._FilterName, value);
         }
-        private string _FilterName;
+        private string? _FilterName;
 
         [XmlElement("ExNameFilter")]
-        public string ExFilterName
+        public string? ExFilterName
         {
             get => this._ExFilterName;
             set => this.SetProperty(ref this._ExFilterName, value);
         }
-        private string _ExFilterName;
+        private string? _ExFilterName;
 
         [XmlArray("BodyFilterArray")]
         public string[] FilterBody
@@ -210,20 +212,20 @@ namespace OpenTween.Models
         private bool _ExFilterRt;
 
         [XmlElement("Source")]
-        public string FilterSource
+        public string? FilterSource
         {
             get => this._FilterSource;
             set => this.SetProperty(ref this._FilterSource, value);
         }
-        private string _FilterSource;
+        private string? _FilterSource;
 
         [XmlElement("ExSource")]
-        public string ExFilterSource
+        public string? ExFilterSource
         {
             get => this._ExFilterSource;
             set => this.SetProperty(ref this._ExFilterSource, value);
         }
-        private string _ExFilterSource;
+        private string? _ExFilterSource;
 
         public PostFilterRule()
         {
@@ -322,14 +324,14 @@ namespace OpenTween.Models
             this.IsDirty = false;
         }
 
-        protected virtual Expression MakeFiltersExpr(
+        protected virtual Expression? MakeFiltersExpr(
             ParameterExpression postParam,
-            string filterName, string[] filterBody, string filterSource, bool filterRt,
+            string? filterName, string[] filterBody, string? filterSource, bool filterRt,
             bool useRegex, bool caseSensitive, bool useNameField, bool useLambda, bool filterByUrl)
         {
             var filterExprs = new List<Expression>();
 
-            if (useNameField && !string.IsNullOrEmpty(filterName))
+            if (useNameField && !MyCommon.IsNullOrEmpty(filterName))
             {
                 filterExprs.Add(Expression.OrElse(
                     this.MakeGenericFilter(postParam, "ScreenName", filterName, useRegex, caseSensitive, exactMatch: true),
@@ -337,7 +339,7 @@ namespace OpenTween.Models
             }
             foreach (var body in filterBody)
             {
-                if (string.IsNullOrEmpty(body))
+                if (MyCommon.IsNullOrEmpty(body))
                     continue;
 
                 Expression bodyExpr;
@@ -376,7 +378,7 @@ namespace OpenTween.Models
 
                 filterExprs.Add(bodyExpr);
             }
-            if (!string.IsNullOrEmpty(filterSource))
+            if (!MyCommon.IsNullOrEmpty(filterSource))
             {
                 if (filterByUrl)
                     filterExprs.Add(this.MakeGenericFilter(postParam, "SourceHtml", filterSource, useRegex, caseSensitive));
@@ -477,7 +479,7 @@ namespace OpenTween.Models
                 this.Compile();
             }
 
-            return this.FilterDelegate(post);
+            return this.FilterDelegate!(post);
         }
 
         public PostFilterRule Clone()
@@ -542,7 +544,7 @@ namespace OpenTween.Models
             {
                 if (this.UseNameField)
                 {
-                    if (!string.IsNullOrEmpty(this.FilterName))
+                    if (!MyCommon.IsNullOrEmpty(this.FilterName))
                     {
                         fs.AppendFormat(Properties.Resources.SetFiltersText1, this.FilterName);
                     }
@@ -591,7 +593,7 @@ namespace OpenTween.Models
                 {
                     fs.Append("LambdaExp/");
                 }
-                if (!string.IsNullOrEmpty(this.FilterSource))
+                if (!MyCommon.IsNullOrEmpty(this.FilterSource))
                 {
                     fs.AppendFormat("Src…{0}/", this.FilterSource);
                 }
@@ -604,7 +606,7 @@ namespace OpenTween.Models
                 fs.Append(Properties.Resources.SetFiltersText12);
                 if (this.ExUseNameField)
                 {
-                    if (!string.IsNullOrEmpty(this.ExFilterName))
+                    if (!MyCommon.IsNullOrEmpty(this.ExFilterName))
                     {
                         fs.AppendFormat(Properties.Resources.SetFiltersText1, this.ExFilterName);
                     }
@@ -653,7 +655,7 @@ namespace OpenTween.Models
                 {
                     fs.Append("LambdaExp/");
                 }
-                if (!string.IsNullOrEmpty(this.ExFilterSource))
+                if (!MyCommon.IsNullOrEmpty(this.ExFilterSource))
                 {
                     fs.AppendFormat("Src…{0}/", this.ExFilterSource);
                 }
@@ -689,28 +691,24 @@ namespace OpenTween.Models
         /// この振り分けルールにマッチ条件が含まれているかを返します
         /// </summary>
         public bool HasMatchConditions()
-        {
-            return !string.IsNullOrEmpty(this.FilterName) ||
-                this.FilterBody.Any(x => !string.IsNullOrEmpty(x)) ||
-                !string.IsNullOrEmpty(this.FilterSource) ||
+            => !MyCommon.IsNullOrEmpty(this.FilterName) ||
+                this.FilterBody.Any(x => !MyCommon.IsNullOrEmpty(x)) ||
+                !MyCommon.IsNullOrEmpty(this.FilterSource) ||
                 this.FilterRt;
-        }
 
         /// <summary>
         /// この振り分けルールに除外条件が含まれているかを返します
         /// </summary>
         public bool HasExcludeConditions()
-        {
-            return !string.IsNullOrEmpty(this.ExFilterName) ||
-                this.ExFilterBody.Any(x => !string.IsNullOrEmpty(x)) ||
-                !string.IsNullOrEmpty(this.ExFilterSource) ||
+            => !MyCommon.IsNullOrEmpty(this.ExFilterName) ||
+                this.ExFilterBody.Any(x => !MyCommon.IsNullOrEmpty(x)) ||
+                !MyCommon.IsNullOrEmpty(this.ExFilterSource) ||
                 this.ExFilterRt;
-        }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
             => this.Equals(obj as PostFilterRule);
 
-        public bool Equals(PostFilterRule other)
+        public bool Equals(PostFilterRule? other)
         {
             if (other == null)
                 return false;
@@ -751,13 +749,11 @@ namespace OpenTween.Models
         }
 
         public override int GetHashCode()
-        {
-            return this.FilterName?.GetHashCode() ?? 0 ^
+            => this.FilterName?.GetHashCode() ?? 0 ^
                 this.FilterSource?.GetHashCode() ?? 0 ^
                 this.FilterBody.Select(x => x?.GetHashCode() ?? 0).Sum() ^
                 this.ExFilterName?.GetHashCode() ?? 0 ^
                 this.ExFilterSource?.GetHashCode() ?? 0 ^
                 this.ExFilterBody.Select(x => x?.GetHashCode() ?? 0).Sum();
-        }
     }
 }

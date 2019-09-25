@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +38,7 @@ namespace OpenTween
 #region Settingクラス基本
         public static SettingAtIdList Load()
         {
-            SettingAtIdList setting = LoadSettings();
+            var setting = LoadSettings();
             return setting;
         }
 
@@ -44,7 +46,7 @@ namespace OpenTween
             => SaveSettings(this);
 
         public SettingAtIdList()
-            => this.AtIdList = new List<String>();
+            => this.AtIdList = new List<string>();
 
         public SettingAtIdList(List<string> ids)
             => this.AtIdList = ids;

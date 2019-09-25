@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -69,7 +71,7 @@ namespace OpenTween.Setting.Panel
 
         private void UserAppointUrlText_Validating(object sender, CancelEventArgs e)
         {
-            if (!UserAppointUrlText.Text.StartsWith("http", StringComparison.Ordinal) && !string.IsNullOrEmpty(UserAppointUrlText.Text))
+            if (!UserAppointUrlText.Text.StartsWith("http", StringComparison.Ordinal) && !MyCommon.IsNullOrEmpty(UserAppointUrlText.Text))
             {
                 MessageBox.Show("Text Error:正しいURLではありません");
             }

@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,7 +36,7 @@ namespace OpenTween
 {
     public class HookGlobalHotkey : NativeWindow, IDisposable
     {
-        private Form _targetForm;
+        private readonly Form _targetForm;
         private class KeyEventValue
         {
             public KeyEventArgs KeyEvent { get; }
@@ -47,7 +49,7 @@ namespace OpenTween
             }
         }
 
-        private Dictionary<int, KeyEventValue> _hotkeyID;
+        private readonly Dictionary<int, KeyEventValue> _hotkeyID;
 
         [Flags]
         public enum ModKeys
@@ -59,7 +61,7 @@ namespace OpenTween
             Win = 0x8,
         }
 
-        public event KeyEventHandler HotkeyPressed;
+        public event KeyEventHandler? HotkeyPressed;
 
         protected override void WndProc(ref Message m)
         {
@@ -84,10 +86,10 @@ namespace OpenTween
            _targetForm.HandleDestroyed += this.OnHandleDestroyed;
         }
 
-        public void OnHandleCreated(Object sender, EventArgs e)
+        public void OnHandleCreated(object sender, EventArgs e)
             => this.AssignHandle(_targetForm.Handle);
 
-        public void OnHandleDestroyed(Object sender, EventArgs e)
+        public void OnHandleDestroyed(object sender, EventArgs e)
             => this.ReleaseHandle();
 
         public bool RegisterOriginalHotkey(Keys hotkey, int hotkeyValue, ModKeys modifiers)

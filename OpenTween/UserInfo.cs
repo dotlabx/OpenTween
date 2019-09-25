@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Net;
 using OpenTween.Api.DataModel;
@@ -51,7 +53,7 @@ namespace OpenTween
             {
                 this.ImageUrl = null;
             }
-            this.Url = user.Url;
+            this.Url = user.Url ?? "";
             this.Protect = user.Protected;
             this.FriendsCount = user.FriendsCount;
             this.FollowersCount = user.FollowersCount;
@@ -65,12 +67,12 @@ namespace OpenTween
                 this.PostSource = user.Status.Source;
             }
         }
-        public Int64 Id = 0;
+        public long Id = 0;
         public string Name = "";
         public string ScreenName = "";
         public string Location = "";
         public string Description = "";
-        public Uri ImageUrl = null;
+        public Uri? ImageUrl = null;
         public string Url = "";
         public bool Protect = false;
         public int FriendsCount = 0;

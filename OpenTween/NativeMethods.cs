@@ -25,6 +25,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -150,9 +152,7 @@ namespace OpenTween
             => SelectItem(listView, -1 /* all items */);
 
         #region "画面ブリンク用"
-        public static bool FlashMyWindow(IntPtr hwnd,
-            FlashSpecification flashType,
-            int flashCount)
+        public static bool FlashMyWindow(IntPtr hwnd, int flashCount)
         {
             var fInfo = new FLASHWINFO();
             fInfo.cbSize = Convert.ToInt32(Marshal.SizeOf(fInfo));
@@ -182,25 +182,25 @@ namespace OpenTween
 
         private struct FLASHWINFO
         {
-            public Int32 cbSize;    // FLASHWINFO構造体のサイズ
+            public int cbSize;    // FLASHWINFO構造体のサイズ
             public IntPtr hwnd;     // 点滅対象のウィンドウ・ハンドル
-            public Int32 dwFlags;   // 以下の「FLASHW_XXX」のいずれか
-            public Int32 uCount;    // 点滅する回数
-            public Int32 dwTimeout; // 点滅する間隔（ミリ秒単位）
+            public int dwFlags;   // 以下の「FLASHW_XXX」のいずれか
+            public int uCount;    // 点滅する回数
+            public int dwTimeout; // 点滅する間隔（ミリ秒単位）
         }
 
         // 点滅を止める
-        private const Int32 FLASHW_STOP = 0;
+        private const int FLASHW_STOP = 0;
         // タイトルバーを点滅させる
-        private const Int32 FLASHW_CAPTION = 0x1;
+        private const int FLASHW_CAPTION = 0x1;
         // タスクバー・ボタンを点滅させる
-        private const Int32 FLASHW_TRAY = 0x2;
+        private const int FLASHW_TRAY = 0x2;
         // タスクバー・ボタンとタイトルバーを点滅させる
-        private const Int32 FLASHW_ALL = 0x3;
+        private const int FLASHW_ALL = 0x3;
         // FLASHW_STOPが指定されるまでずっと点滅させる
-        private const Int32 FLASHW_TIMER = 0x4;
+        private const int FLASHW_TIMER = 0x4;
         // ウィンドウが最前面に来るまでずっと点滅させる
-        private const Int32 FLASHW_TIMERNOFG = 0xC;
+        private const int FLASHW_TIMERNOFG = 0xC;
         #endregion
 
         [DllImport("user32.dll")]
@@ -290,7 +290,6 @@ namespace OpenTween
                 UnregisterHotKey(targetForm.Handle, hotkeyID);
                 // clean up the atom list
                 GlobalDeleteAtom(hotkeyID);
-                hotkeyID = 0;
             }
         }
         #endregion
@@ -316,23 +315,22 @@ namespace OpenTween
         private struct InternetProxyInfo
         {
             public InternetOpenType dwAccessType;
-            public string proxy;
-            public string proxyBypass;
+            public string? proxy;
+            public string? proxyBypass;
         }
 
         private enum InternetOpenType
         {
-            //PRECONFIG = 0, // IE setting
             DIRECT = 1, // Direct
             PROXY = 3, // Custom
         }
 
-        private static void RefreshProxySettings(string strProxy)
+        private static void RefreshProxySettings(string? strProxy)
         {
             InternetProxyInfo ipi;
 
             // Filling in structure
-            if (!string.IsNullOrEmpty(strProxy))
+            if (!MyCommon.IsNullOrEmpty(strProxy))
             {
                 ipi = new InternetProxyInfo
                 {
@@ -378,21 +376,15 @@ namespace OpenTween
                 throw new Win32Exception();
         }
 
-        public static void SetProxy(ProxyType pType, string host, int port, string username, string password)
+        public static void SetProxy(ProxyType pType, string host, int port)
         {
-            string proxy = null;
-            switch (pType)
+            var proxy = pType switch
             {
-            case ProxyType.IE:
-                proxy = null;
-                break;
-            case ProxyType.None:
-                proxy = "";
-                break;
-            case ProxyType.Specified:
-                proxy = host + (port > 0 ? ":" + port : "");
-                break;
-            }
+                ProxyType.IE => null,
+                ProxyType.None => "",
+                ProxyType.Specified => host + (port > 0 ? ":" + port : ""),
+                _ => null,
+            };
             RefreshProxySettings(proxy);
         }
 #endregion
@@ -478,11 +470,11 @@ namespace OpenTween
 
                 if (procId == pid)
                 {
-                    int windowTitleLen = GetWindowTextLength(hWnd);
+                    var windowTitleLen = GetWindowTextLength(hWnd);
 
                     if (windowTitleLen > 0)
                     {
-                        StringBuilder windowTitle = new StringBuilder(windowTitleLen + 1);
+                        var windowTitle = new StringBuilder(windowTitleLen + 1);
                         GetWindowText(hWnd, windowTitle, windowTitle.Capacity);
 
                         if (windowTitle.ToString().Contains(searchWindowTitle))

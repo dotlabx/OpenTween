@@ -19,6 +19,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable annotations
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,9 +40,7 @@ namespace OpenTween.Api.DataModel
 
         /// <exception cref="SerializationException"/>
         public static TwitterError ParseJson(string json)
-        {
-            return MyCommon.CreateDataFromJson<TwitterError>(json);
-        }
+            => MyCommon.CreateDataFromJson<TwitterError>(json);
     }
 
     [DataContract]

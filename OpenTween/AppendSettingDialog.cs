@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -46,10 +48,10 @@ namespace OpenTween
 {
     public partial class AppendSettingDialog : OTBaseForm
     {
-        public event EventHandler<IntervalChangedEventArgs> IntervalChanged;
+        public event EventHandler<IntervalChangedEventArgs>? IntervalChanged;
 
-        internal Twitter tw;
-        internal TwitterApi twitterApi;
+        internal Twitter tw = null!;
+        internal TwitterApi twitterApi = null!;
 
         public AppendSettingDialog()
         {
@@ -275,14 +277,14 @@ namespace OpenTween
             TwitterApiConnection.RestApiHost = this.ConnectionPanel.TwitterAPIText.Text.Trim();
         }
 
-        private async Task<UserAccount> PinAuth()
+        private async Task<UserAccount?> PinAuth()
         {
             var requestToken = await TwitterApiConnection.GetRequestTokenAsync();
 
             var pinPageUrl = TwitterApiConnection.GetAuthorizeUri(requestToken);
 
             var pin = AuthDialog.DoAuth(this, pinPageUrl);
-            if (string.IsNullOrEmpty(pin))
+            if (MyCommon.IsNullOrEmpty(pin))
                 return null; // キャンセルされた場合
 
             var accessTokenResponse = await TwitterApiConnection.GetAccessTokenAsync(requestToken, pin);
@@ -314,17 +316,17 @@ namespace OpenTween
 
         private void OpenUrl(string url)
         {
-            string myPath = url;
-            string path = this.ActionPanel.BrowserPathText.Text;
+            var myPath = url;
+            var path = this.ActionPanel.BrowserPathText.Text;
             try
             {
-                if (!string.IsNullOrEmpty(path))
+                if (!MyCommon.IsNullOrEmpty(path))
                 {
                     if (path.StartsWith("\"", StringComparison.Ordinal) && path.Length > 2 && path.IndexOf("\"", 2, StringComparison.Ordinal) > -1)
                     {
-                        int sep = path.IndexOf("\"", 2, StringComparison.Ordinal);
-                        string browserPath = path.Substring(1, sep - 1);
-                        string arg = "";
+                        var sep = path.IndexOf("\"", 2, StringComparison.Ordinal);
+                        var browserPath = path.Substring(1, sep - 1);
+                        var arg = "";
                         if (sep < path.Length - 1)
                         {
                             arg = path.Substring(sep + 1);

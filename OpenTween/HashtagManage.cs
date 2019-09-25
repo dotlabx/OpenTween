@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -49,7 +51,7 @@ namespace OpenTween
         public bool RunSilent { get; set; }
 
         //入力補助画面
-        private AtIdSupplement _hashSupl;
+        private readonly AtIdSupplement _hashSupl;
 
         //編集モード
         private bool _isAdd = false;
@@ -123,14 +125,14 @@ namespace OpenTween
 
         private int GetIndexOf(ListBox.ObjectCollection list, string value)
         {
-            if (string.IsNullOrEmpty(value)) return -1;
+            if (MyCommon.IsNullOrEmpty(value)) return -1;
 
-            int idx = 0;
+            var idx = 0;
 
-            foreach (object l in list)
+            foreach (var l in list)
             {
-                string src = l as string;
-                if (string.IsNullOrEmpty(src))
+                var src = (string)l;
+                if (MyCommon.IsNullOrEmpty(src))
                 {
                     idx += 1;
                     continue;
@@ -149,12 +151,12 @@ namespace OpenTween
         public void AddHashToHistory(string hash, bool isIgnorePermanent)
         {
             hash = hash.Trim();
-            if (!string.IsNullOrEmpty(hash))
+            if (!MyCommon.IsNullOrEmpty(hash))
             {
                 if (isIgnorePermanent || !this.IsPermanent)
                 {
                     //無条件に先頭に挿入
-                    int idx = GetIndexOf(HistoryHashList.Items, hash);
+                    var idx = GetIndexOf(HistoryHashList.Items, hash);
 
                     if (idx != -1) HistoryHashList.Items.RemoveAt(idx);
                     HistoryHashList.Items.Insert(0, hash);
@@ -162,7 +164,7 @@ namespace OpenTween
                 else
                 {
                     //固定されていたら2行目に挿入
-                    int idx = GetIndexOf(HistoryHashList.Items, hash);
+                    var idx = GetIndexOf(HistoryHashList.Items, hash);
                     if (this.IsPermanent)
                     {
                         if (idx > 0)
@@ -229,11 +231,11 @@ namespace OpenTween
             if (e.KeyChar == '#')
             {
                 _hashSupl.ShowDialog();
-                if (!string.IsNullOrEmpty(_hashSupl.inputText))
+                if (!MyCommon.IsNullOrEmpty(_hashSupl.inputText))
                 {
-                    string fHalf = "";
-                    string eHalf = "";
-                    int selStart = UseHashText.SelectionStart;
+                    var fHalf = "";
+                    var eHalf = "";
+                    var selStart = UseHashText.SelectionStart;
                     if (selStart > 0)
                     {
                         fHalf = UseHashText.Text.Substring(0, selStart);
@@ -250,11 +252,11 @@ namespace OpenTween
         }
 
         private void HistoryHashList_DoubleClick(object sender, EventArgs e)
-            => this.OK_Button_Click(null, null);
+            => this.OK_Button_Click(this.OK_Button, EventArgs.Empty);
 
         public void ToggleHash()
         {
-            if (string.IsNullOrEmpty(this.UseHash))
+            if (MyCommon.IsNullOrEmpty(this.UseHash))
             {
                 if (this.HistoryHashList.Items.Count > 0)
                     this.UseHash = this.HistoryHashList.Items[0].ToString();
@@ -269,7 +271,7 @@ namespace OpenTween
         {
             get
             {
-                List<string> hash = new List<string>();
+                var hash = new List<string>();
                 foreach (string item in HistoryHashList.Items)
                 {
                     hash.Add(item);
@@ -292,14 +294,13 @@ namespace OpenTween
         private void PermOK_Button_Click(object sender, EventArgs e)
         {
             //ハッシュタグの整形
-            string hashStr = UseHashText.Text;
+            var hashStr = UseHashText.Text;
             if (!this.AdjustHashtags(ref hashStr, !this.RunSilent)) return;
 
             UseHashText.Text = hashStr;
-            int idx = 0;
             if (!this._isAdd && this.HistoryHashList.SelectedIndices.Count > 0)
             {
-                idx = this.HistoryHashList.SelectedIndices[0];
+                var idx = this.HistoryHashList.SelectedIndices[0];
                 this.HistoryHashList.Items.RemoveAt(idx);
                 do
                 {
@@ -334,24 +335,24 @@ namespace OpenTween
         private void HistoryHashList_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Delete)
-                this.DeleteButton_Click(null, null);
+                this.DeleteButton_Click(this.DeleteButton, EventArgs.Empty);
             else if (e.KeyCode == Keys.Insert)
-                this.AddButton_Click(null, null);
+                this.AddButton_Click(this.AddButton, EventArgs.Empty);
         }
 
         private bool AdjustHashtags(ref string hashtag, bool isShowWarn)
         {
             //ハッシュタグの整形
             hashtag = hashtag.Trim();
-            if (string.IsNullOrEmpty(hashtag))
+            if (MyCommon.IsNullOrEmpty(hashtag))
             {
                 if (isShowWarn) MessageBox.Show("emply hashtag.", "Hashtag warning", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                 return false;
             }
             hashtag = hashtag.Replace("＃", "#");
             hashtag = hashtag.Replace("　", " ");
-            string adjust = "";
-            foreach (string hash in hashtag.Split(' '))
+            var adjust = "";
+            foreach (var hash in hashtag.Split(' '))
             {
                 if (hash.Length > 0)
                 {
@@ -375,13 +376,13 @@ namespace OpenTween
 
         private void OK_Button_Click(object sender, EventArgs e)
         {
-            string hash = "";
+            var hash = "";
             foreach (string hs in this.HistoryHashList.SelectedItems)
             {
                 hash += hs + " ";
             }
             hash = hash.Trim();
-            if (!string.IsNullOrEmpty(hash))
+            if (!MyCommon.IsNullOrEmpty(hash))
             {
                 this.AddHashToHistory(hash, true);
                 this.IsPermanent = this.CheckPermanent.Checked;
@@ -404,17 +405,17 @@ namespace OpenTween
             {
                 e.Handled = true;
                 if (this.GroupDetail.Enabled)
-                    this.PermOK_Button_Click(null, null);
+                    this.PermOK_Button_Click(this.PermOK_Button, EventArgs.Empty);
                 else
-                    this.OK_Button_Click(null, null);
+                    this.OK_Button_Click(this.OK_Button, EventArgs.Empty);
             }
             else if (e.KeyCode == Keys.Escape)
             {
                 e.Handled = true;
                 if (this.GroupDetail.Enabled)
-                    this.PermCancel_Button_Click(null, null);
+                    this.PermCancel_Button_Click(this.PermCancel_Button, EventArgs.Empty);
                 else
-                    this.Cancel_Button_Click(null, null);
+                    this.Cancel_Button_Click(this.Cancel_Button, EventArgs.Empty);
             }
         }
 

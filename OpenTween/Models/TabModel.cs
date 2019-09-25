@@ -25,6 +25,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -69,10 +71,32 @@ namespace OpenTween.Models
         /// </summary>
         public virtual bool IsPermanentTabType => true;
 
+        public long[] SelectedStatusIds
+            => this.selectedStatusIds.ToArray();
+
+        public long SelectedStatusId
+            => this.selectedStatusIds.DefaultIfEmpty(-1).First();
+
+        public PostClass[] SelectedPosts
+            => this.selectedStatusIds.Select(x => this.Posts[x]).ToArray();
+
+        public PostClass? SelectedPost
+            => this.selectedStatusIds.Select(x => this.Posts[x]).FirstOrDefault();
+
+        public int SelectedIndex
+        {
+            get
+            {
+                var statusId = this.SelectedStatusId;
+                return statusId != -1 ? this.IndexOf(statusId) : -1;
+            }
+        }
+
         private IndexedSortedSet<long> _ids = new IndexedSortedSet<long>();
         private ConcurrentQueue<TemporaryId> addQueue = new ConcurrentQueue<TemporaryId>();
-        private ConcurrentQueue<long> removeQueue = new ConcurrentQueue<long>();
+        private readonly ConcurrentQueue<long> removeQueue = new ConcurrentQueue<long>();
         private SortedSet<long> unreadIds = new SortedSet<long>();
+        private List<long> selectedStatusIds = new List<long>();
 
         private readonly object _lockObj = new object();
 
@@ -81,7 +105,7 @@ namespace OpenTween.Models
 
         public abstract Task RefreshAsync(Twitter tw, bool backward, bool startup, IProgress<string> progress);
 
-        private struct TemporaryId
+        private readonly struct TemporaryId
         {
             public long StatusId { get; }
             public bool Read { get; }
@@ -135,6 +159,7 @@ namespace OpenTween.Models
                 return false;
 
             this.unreadIds.Remove(statusId);
+            this.selectedStatusIds.Remove(statusId);
             return true;
         }
 
@@ -151,10 +176,24 @@ namespace OpenTween.Models
             return removedIds;
         }
 
+        public void SelectPosts(int[] indices)
+        {
+            bool IsValidIndex(int index)
+                => index >= 0 && index < this.AllCount;
+
+            var firstErrorId = indices.FirstOrDefault(x => !IsValidIndex(x));
+            if (firstErrorId != default)
+                throw new ArgumentOutOfRangeException($"Invalid index: {firstErrorId}", nameof(indices));
+
+            var statusIds = indices.Select(x => this.GetStatusIdAt(x)).ToList();
+            this.selectedStatusIds = statusIds;
+        }
+
         public virtual void ClearIDs()
         {
             this._ids.Clear();
             this.unreadIds.Clear();
+            this.selectedStatusIds.Clear();
 
             Interlocked.Exchange(ref this.addQueue, new ConcurrentQueue<TemporaryId>());
         }
@@ -195,16 +234,16 @@ namespace OpenTween.Models
                 {
                     default:
                     case ComparerMode.Data:
-                        postComparison = (x, y) => Comparer<string>.Default.Compare(x?.TextFromApi, y?.TextFromApi);
+                        postComparison = (x, y) => Comparer<string?>.Default.Compare(x?.TextFromApi, y?.TextFromApi);
                         break;
                     case ComparerMode.Name:
-                        postComparison = (x, y) => Comparer<string>.Default.Compare(x?.ScreenName, y?.ScreenName);
+                        postComparison = (x, y) => Comparer<string?>.Default.Compare(x?.ScreenName, y?.ScreenName);
                         break;
                     case ComparerMode.Nickname:
-                        postComparison = (x, y) => Comparer<string>.Default.Compare(x?.Nickname, y?.Nickname);
+                        postComparison = (x, y) => Comparer<string?>.Default.Compare(x?.Nickname, y?.Nickname);
                         break;
                     case ComparerMode.Source:
-                        postComparison = (x, y) => Comparer<string>.Default.Compare(x?.Source, y?.Source);
+                        postComparison = (x, y) => Comparer<string?>.Default.Compare(x?.Source, y?.Source);
                         break;
                 }
 

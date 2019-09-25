@@ -1,5 +1,5 @@
 ﻿// OpenTween - Client of Twitter
-// Copyright (c) 2014 kim_upsilon (@kim_upsilon) <https://upsilo.net/~upsilon/>
+// Copyright (c) 2019 kim_upsilon (@kim_upsilon) <https://upsilo.net/~upsilon/>
 // All rights reserved.
 //
 // This file is part of OpenTween.
@@ -21,23 +21,21 @@
 
 #nullable enable
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 
-namespace OpenTween
+namespace OpenTween.Models
 {
-    /// <summary>
-    /// タブの操作時に問題が発生した場合にスローされる例外
-    /// </summary>
-    [Serializable]
-    public class TabException : Exception
+    public interface IReadOnlyTabCollection : IReadOnlyList<TabModel>
     {
-        public TabException() { }
-        public TabException(string message) : base(message) { }
-        public TabException(string message, Exception innerException) : base(message, innerException) { }
-        protected TabException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+        TabModel this[string tabName] { get; }
+
+        int IndexOf(string tabName);
+
+        int IndexOf(TabModel tab);
+
+        bool Contains(string tabName);
+
+        bool TryGetValue(string tabName, [NotNullWhen(true)] out TabModel? tab);
     }
 }

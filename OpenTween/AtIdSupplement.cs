@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -41,7 +43,7 @@ namespace OpenTween
 
         public string inputText = "";
         public bool isBack = false;
-        private string startChar = "";
+        private readonly string startChar = "";
 
         public void AddItem(string id)
         {
@@ -62,7 +64,7 @@ namespace OpenTween
         public List<string> GetItemList()
         {
             var ids = new List<string>();
-            for (int i = 0; i < this.TextId.AutoCompleteCustomSource.Count; ++i)
+            for (var i = 0; i < this.TextId.AutoCompleteCustomSource.Count; ++i)
             {
                 ids.Add(this.TextId.AutoCompleteCustomSource[i]);
             }
@@ -72,21 +74,21 @@ namespace OpenTween
         public int ItemCount
             => this.TextId.AutoCompleteCustomSource.Count;
 
-        private void ButtonOK_Click(object sender, EventArgs e) /*Handles ButtonOK.Click*/
+        private void ButtonOK_Click(object sender, EventArgs e)
         {
             inputText = this.TextId.Text;
             isBack = false;
         }
 
-        private void ButtonCancel_Click(object sender, EventArgs e) /*Handles ButtonCancel.Click*/
+        private void ButtonCancel_Click(object sender, EventArgs e)
         {
             inputText = "";
             isBack = false;
         }
 
-        private void TextId_KeyDown(object sender, KeyEventArgs e) /*Handles TextId.KeyDown*/
+        private void TextId_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Back && string.IsNullOrEmpty(this.TextId.Text))
+            if (e.KeyCode == Keys.Back && MyCommon.IsNullOrEmpty(this.TextId.Text))
             {
                 inputText = "";
                 isBack = true;
@@ -100,7 +102,7 @@ namespace OpenTween
             }
             else if (e.Control && e.KeyCode == Keys.Delete)
             {
-                if (!string.IsNullOrEmpty(this.TextId.Text))
+                if (!MyCommon.IsNullOrEmpty(this.TextId.Text))
                 {
                     var idx = this.TextId.AutoCompleteCustomSource.IndexOf(this.TextId.Text);
                     if (idx > -1)
@@ -112,7 +114,7 @@ namespace OpenTween
             }
         }
 
-        private void AtIdSupplement_Load(object sender, EventArgs e) /*Handles this.Load*/
+        private void AtIdSupplement_Load(object sender, EventArgs e)
         {
             if (startChar == "#")
             {
@@ -121,10 +123,10 @@ namespace OpenTween
             }
         }
 
-        private void AtIdSupplement_Shown(object sender, EventArgs e) /*Handles this.Shown*/
+        private void AtIdSupplement_Shown(object sender, EventArgs e)
         {
             TextId.Text = startChar;
-            if (!string.IsNullOrEmpty(this.StartsWith))
+            if (!MyCommon.IsNullOrEmpty(this.StartsWith))
             {
                 TextId.Text += this.StartsWith.Substring(0, this.StartsWith.Length);
             }
@@ -139,14 +141,14 @@ namespace OpenTween
         {
             InitializeComponent();
 
-            for (int i = 0; i < ItemList.Count; ++i)
+            for (var i = 0; i < ItemList.Count; ++i)
             {
                 this.TextId.AutoCompleteCustomSource.Add(ItemList[i]);
             }
             startChar = startCharacter;
         }
 
-        private void TextId_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e) /*Handles TextId.PreviewKeyDown*/
+        private void TextId_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
             if (e.KeyCode == Keys.Tab)
             {
@@ -156,7 +158,7 @@ namespace OpenTween
             }
         }
 
-        private void AtIdSupplement_FormClosed(object sender, FormClosedEventArgs e) /*Handles MyBase.FormClosed*/
+        private void AtIdSupplement_FormClosed(object sender, FormClosedEventArgs e)
         {
             this.StartsWith = "";
             if (isBack)

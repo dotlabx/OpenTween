@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -95,7 +97,7 @@ namespace OpenTween.Setting.Panel
 
         private void RadioProxySpecified_CheckedChanged(object sender, EventArgs e)
         {
-            bool chk = RadioProxySpecified.Checked;
+            var chk = RadioProxySpecified.Checked;
             LabelProxyAddress.Enabled = chk;
             TextProxyAddress.Enabled = chk;
             LabelProxyPort.Enabled = chk;

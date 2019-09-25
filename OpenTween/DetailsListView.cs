@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,10 +42,10 @@ namespace OpenTween.OpenTweenCustomControl
     {
         private Rectangle changeBounds;
 
-        public ContextMenuStrip ColumnHeaderContextMenuStrip { get; set; }
+        public ContextMenuStrip? ColumnHeaderContextMenuStrip { get; set; }
 
-        public event EventHandler VScrolled;
-        public event EventHandler HScrolled;
+        public event EventHandler? VScrolled;
+        public event EventHandler? HScrolled;
 
         public DetailsListView()
         {
@@ -52,50 +54,6 @@ namespace OpenTween.OpenTweenCustomControl
             HideSelection = false;
             DoubleBuffered = true;
         }
-
-        //[System.ComponentModel.DefaultValue(0),
-        // System.ComponentModel.RefreshProperties(System.ComponentModel.RefreshProperties.Repaint)]
-        //public new int VirtualListSize
-        //{
-        //    get { return base.VirtualListSize; }
-        //    set
-        //    {
-        //        if (value == base.VirtualListSize) return;
-        //        if (base.VirtualListSize > 0 && value > 0)
-        //        {
-        //            int topIndex = 0;
-        //            if (!this.IsDisposed)
-        //            {
-        //                if (base.VirtualListSize < value)
-        //                {
-        //                    if (this.TopItem == null)
-        //                    {
-        //                        topIndex = 0;
-        //                    }
-        //                    else
-        //                    {
-        //                        topIndex = this.TopItem.Index;
-        //                    }
-        //                    topIndex = Math.Min(topIndex, Math.Abs(value - 1));
-        //                    this.TopItem = this.Items[topIndex];
-        //                }
-        //                else
-        //                {
-        //                    if (this.TopItem == null)
-        //                    {
-        //                        topIndex = 0;
-        //                    }
-        //                    else
-        //                    {
-        //
-        //                    }
-        //                    this.TopItem = this.Items[0];
-        //                }
-        //            }
-        //        }
-        //        base.VirtualListSize = value;
-        //    }
-        //}
 
         /// <summary>
         /// 複数選択時の起点になるアイテム (selection mark) の位置を取得・設定する
@@ -130,87 +88,46 @@ namespace OpenTween.OpenTweenCustomControl
             this.OnSelectedIndexChanged(EventArgs.Empty);
         }
 
-        public void ChangeItemBackColor(int index, Color backColor)
-            => this.ChangeSubItemBackColor(index, 0, backColor);
-
-        public void ChangeItemForeColor(int index, Color foreColor)
-            => this.ChangeSubItemForeColor(index, 0, foreColor);
-
-        public void ChangeItemFont(int index, Font fnt)
-            => this.ChangeSubItemFont(index, 0, fnt);
-
-        public void ChangeItemFontAndColor(int index, Color foreColor, Font fnt)
-            => this.ChangeSubItemStyles(index, 0, BackColor, foreColor, fnt);
-
-        public void ChangeItemStyles(int index, Color backColor, Color foreColor, Font fnt)
-            => this.ChangeSubItemStyles(index, 0, backColor, foreColor, fnt);
-
-        public void ChangeSubItemBackColor(int itemIndex, int subitemIndex, Color backColor)
+        public void ChangeItemBackColor(ListViewItem item, Color backColor)
         {
-            var item = this.Items[itemIndex];
-            item.SubItems[subitemIndex].BackColor = backColor;
-            SetUpdateBounds(item, subitemIndex);
-            this.Update();
-            this.changeBounds = Rectangle.Empty;
+            if (item.BackColor == backColor)
+                return;
+
+            item.BackColor = backColor;
+            this.RefreshItemBounds(item);
         }
 
-        public void ChangeSubItemForeColor(int itemIndex, int subitemIndex, Color foreColor)
+        public void ChangeItemForeColor(ListViewItem item, Color foreColor)
         {
-            var item = this.Items[itemIndex];
-            item.SubItems[subitemIndex].ForeColor = foreColor;
-            SetUpdateBounds(item, subitemIndex);
-            this.Update();
-            this.changeBounds = Rectangle.Empty;
+            if (item.ForeColor == foreColor)
+                return;
+
+            item.ForeColor = foreColor;
+            this.RefreshItemBounds(item);
         }
 
-        public void ChangeSubItemFont(int itemIndex, int subitemIndex, Font fnt)
+        public void ChangeItemFontAndColor(ListViewItem item, Color foreColor, Font fnt)
         {
-            var item = this.Items[itemIndex];
-            item.SubItems[subitemIndex].Font = fnt;
-            SetUpdateBounds(item, subitemIndex);
-            this.Update();
-            this.changeBounds = Rectangle.Empty;
+            if (item.ForeColor == foreColor && item.Font.Equals(fnt))
+                return;
+
+            item.ForeColor = foreColor;
+            item.Font = fnt;
+            this.RefreshItemBounds(item);
         }
 
-        public void ChangeSubItemFontAndColor(int itemIndex, int subitemIndex, Color foreColor, Font fnt)
-        {
-            var item = this.Items[itemIndex];
-            var subItem = item.SubItems[subitemIndex];
-            subItem.ForeColor = foreColor;
-            subItem.Font = fnt;
-            SetUpdateBounds(item, subitemIndex);
-            this.Update();
-            this.changeBounds = Rectangle.Empty;
-        }
-
-        public void ChangeSubItemStyles(int itemIndex, int subitemIndex, Color backColor, Color foreColor, Font fnt)
-        {
-            var item = this.Items[itemIndex];
-            var subItem = item.SubItems[subitemIndex];
-            subItem.BackColor = backColor;
-            subItem.ForeColor = foreColor;
-            subItem.Font = fnt;
-            SetUpdateBounds(item, subitemIndex);
-            this.Update();
-            this.changeBounds = Rectangle.Empty;
-        }
-
-        private void SetUpdateBounds(ListViewItem item, int subItemIndex)
+        private void RefreshItemBounds(ListViewItem item)
         {
             try
             {
-                if (subItemIndex > this.Columns.Count)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(subItemIndex));
-                }
-                if (item.UseItemStyleForSubItems)
-                {
-                    this.changeBounds = item.Bounds;
-                }
-                else
-                {
-                    this.changeBounds = this.GetSubItemBounds(item, subItemIndex);
-                }
+                var itemBounds = item.Bounds;
+                var drawBounds = Rectangle.Intersect(this.ClientRectangle, itemBounds);
+                if (drawBounds == Rectangle.Empty)
+                    return;
+
+                this.changeBounds = drawBounds;
+                this.Update();
+                this.changeBounds = Rectangle.Empty;
             }
             catch (ArgumentException)
             {
@@ -219,17 +136,12 @@ namespace OpenTween.OpenTweenCustomControl
             }
         }
 
-        private Rectangle GetSubItemBounds(ListViewItem item, int subitemIndex)
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NMHDR
         {
-            if (subitemIndex == 0 && this.Columns.Count > 0)
-            {
-                Rectangle col0 = item.Bounds;
-                return new Rectangle(col0.Left, col0.Top, item.SubItems[1].Bounds.X + 1, col0.Height);
-            }
-            else
-            {
-                return item.SubItems[subitemIndex].Bounds;
-            }
+            public IntPtr hwndFrom;
+            public IntPtr idFrom;
+            public int code;
         }
 
         [DebuggerStepThrough]
@@ -242,13 +154,17 @@ namespace OpenTween.OpenTweenCustomControl
             const int WM_HSCROLL = 0x114;
             const int WM_VSCROLL = 0x115;
             const int WM_KEYDOWN = 0x100;
+            const int WM_USER = 0x400;
+            const int WM_REFLECT = WM_USER + 0x1C00;
+            const int WM_NOTIFY = 0x004E;
             const int WM_CONTEXTMENU = 0x7B;
             const int LVM_SETITEMCOUNT = 0x102F;
+            const int LVN_ODSTATECHANGED = ((0 - 100) - 15);
             const long LVSICF_NOSCROLL = 0x2;
             const long LVSICF_NOINVALIDATEALL = 0x1;
 
-            int hPos = -1;
-            int vPos = -1;
+            var hPos = -1;
+            var vPos = -1;
 
             switch (m.Msg)
             {
@@ -286,6 +202,13 @@ namespace OpenTween.OpenTweenCustomControl
                     break;
                 case LVM_SETITEMCOUNT:
                     m.LParam = new IntPtr(LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
+                    break;
+                case WM_REFLECT + WM_NOTIFY:
+                    var nmhdr = Marshal.PtrToStructure<NMHDR>(m.LParam);
+
+                    // Ctrl+クリックで選択状態を変更した場合にイベントが発生しない問題への対処
+                    if (nmhdr.code == LVN_ODSTATECHANGED)
+                        this.OnSelectedIndexChanged(EventArgs.Empty);
                     break;
             }
 

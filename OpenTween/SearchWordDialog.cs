@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -69,13 +71,13 @@ namespace OpenTween
             }
         }
 
-        private SearchOptions resultOptoins = null;
-        public SearchOptions ResultOptions
+        private SearchOptions? resultOptions = null;
+        public SearchOptions? ResultOptions
         {
-            get => this.resultOptoins;
+            get => this.resultOptions;
             set
             {
-                this.resultOptoins = value;
+                this.resultOptions = value;
 
                 if (value == null)
                 {
@@ -150,7 +152,7 @@ namespace OpenTween
 
         private void buttonSearchTimeline_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(this.textSearchTimeline.Text))
+            if (MyCommon.IsNullOrEmpty(this.textSearchTimeline.Text))
             {
                 this.DialogResult = DialogResult.Cancel;
                 return;
@@ -169,7 +171,7 @@ namespace OpenTween
 
         private void buttonSearchTimelineNew_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(this.textSearchTimeline.Text))
+            if (MyCommon.IsNullOrEmpty(this.textSearchTimeline.Text))
             {
                 this.DialogResult = DialogResult.Cancel;
                 return;
@@ -188,7 +190,7 @@ namespace OpenTween
 
         private void buttonSearchPublic_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(this.textSearchPublic.Text))
+            if (MyCommon.IsNullOrEmpty(this.textSearchPublic.Text))
             {
                 this.DialogResult = DialogResult.Cancel;
                 return;

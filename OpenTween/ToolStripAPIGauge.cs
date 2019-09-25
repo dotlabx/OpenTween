@@ -19,6 +19,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,7 +68,7 @@ namespace OpenTween
         /// API 実行回数制限の値
         /// </summary>
         [Browsable(false)]
-        public ApiLimit ApiLimit
+        public ApiLimit? ApiLimit
         {
             get => this._ApiLimit;
             private set
@@ -79,18 +81,18 @@ namespace OpenTween
                 this.Invalidate();
             }
         }
-        private ApiLimit _ApiLimit = null;
+        private ApiLimit? _ApiLimit = null;
 
         /// <summary>
         /// API エンドポイント名
         /// </summary>
         [Browsable(false)]
-        public string ApiEndpoint
+        public string? ApiEndpoint
         {
             get => this._ApiEndpoint;
             set
             {
-                if (string.IsNullOrEmpty(value))
+                if (MyCommon.IsNullOrEmpty(value))
                 {
                     // リセット
                     this._ApiEndpoint = null;
@@ -117,7 +119,7 @@ namespace OpenTween
                 }
             }
         }
-        private string _ApiEndpoint = null;
+        private string? _ApiEndpoint = null;
 
         [Browsable(false)]
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -220,7 +222,7 @@ namespace OpenTween
                 minuteText = Math.Ceiling(this.remainMinutes).ToString();
             }
 
-            var endpointText = string.IsNullOrEmpty(this._ApiEndpoint) ? "unknown" : this._ApiEndpoint;
+            var endpointText = MyCommon.IsNullOrEmpty(this._ApiEndpoint) ? "unknown" : this._ApiEndpoint;
 
             var textFormat = "API {0}/{1}";
             this.Text = string.Format(textFormat, remainCountText, maxCountText);
@@ -229,7 +231,7 @@ namespace OpenTween
                 "API rest {0} {1}/{2}" + Environment.NewLine +
                 "(reset after {3} minutes)";
 
-            this.ToolTipText = String.Format(toolTipTextFormat, endpointText, remainCountText, maxCountText, minuteText);
+            this.ToolTipText = string.Format(toolTipTextFormat, endpointText, remainCountText, maxCountText, minuteText);
         }
 
         #endregion

@@ -25,6 +25,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -71,7 +73,7 @@ namespace OpenTween.Models
             if (!base.RemovePostImmediately(statusId))
                 return false;
 
-            this.internalPosts.TryRemove(statusId, out var removedPost);
+            this.internalPosts.TryRemove(statusId, out _);
 
             return true;
         }

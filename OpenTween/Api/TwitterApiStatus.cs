@@ -19,6 +19,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -38,16 +40,16 @@ namespace OpenTween.Api
     {
         public TwitterApiAccessLevel AccessLevel { get; set; }
         public EndpointLimits AccessLimit { get; }
-        public ApiLimit MediaUploadLimit { get; set; }
+        public ApiLimit? MediaUploadLimit { get; set; }
 
         public class AccessLimitUpdatedEventArgs : EventArgs
         {
-            public string EndpointName { get; }
+            public string? EndpointName { get; }
 
-            public AccessLimitUpdatedEventArgs(string endpointName)
+            public AccessLimitUpdatedEventArgs(string? endpointName)
                 => this.EndpointName = endpointName;
         }
-        public event EventHandler<AccessLimitUpdatedEventArgs> AccessLimitUpdated;
+        public event EventHandler<AccessLimitUpdatedEventArgs>? AccessLimitUpdated;
 
         public TwitterApiStatus()
             => this.AccessLimit = new EndpointLimits(this);
@@ -59,7 +61,7 @@ namespace OpenTween.Api
             this.MediaUploadLimit = null;
         }
 
-        internal static ApiLimit ParseRateLimit(IDictionary<string, string> header, string prefix)
+        internal static ApiLimit? ParseRateLimit(IDictionary<string, string> header, string prefix)
         {
             var limitCount = (int?)ParseHeaderValue(header, prefix + "Limit");
             var limitRemain = (int?)ParseHeaderValue(header, prefix + "Remaining");
@@ -78,7 +80,7 @@ namespace OpenTween.Api
                 return null;
 
             // たまに出てくる空文字列は無視する
-            if (string.IsNullOrEmpty(header[headerName]))
+            if (MyCommon.IsNullOrEmpty(header[headerName]))
                 return null;
 
             switch (header[headerName])
@@ -151,17 +153,22 @@ namespace OpenTween.Api
         {
             public TwitterApiStatus Owner { get; }
 
-            private ConcurrentDictionary<string, ApiLimit> innerDict = new ConcurrentDictionary<string, ApiLimit>();
+            private readonly ConcurrentDictionary<string, ApiLimit> innerDict
+                = new ConcurrentDictionary<string, ApiLimit>();
 
             public EndpointLimits(TwitterApiStatus owner)
                 => this.Owner = owner;
 
-            public ApiLimit this[string endpoint]
+            public ApiLimit? this[string endpoint]
             {
                 get => this.innerDict.TryGetValue(endpoint, out var limit) ? limit : null;
                 set
                 {
-                    this.innerDict[endpoint] = value;
+                    if (value == null)
+                        this.innerDict.TryRemove(endpoint, out var _);
+                    else
+                        this.innerDict[endpoint] = value;
+
                     this.Owner.OnAccessLimitUpdated(new AccessLimitUpdatedEventArgs(endpoint));
                 }
             }

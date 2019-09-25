@@ -24,6 +24,8 @@
 // the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 // Boston, MA 02110-1301, USA.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -54,9 +56,6 @@ namespace OpenTween.Setting.Panel
 
         private void AuthClearButton_Click(object sender, EventArgs e)
         {
-            //tw.ClearAuthInfo();
-            //this.AuthStateLabel.Text = Properties.Resources.AuthorizeButton_Click4;
-            //this.AuthUserLabel.Text = "";
             if (this.AuthUserCombo.SelectedIndex > -1)
             {
                 this.AuthUserCombo.Items.RemoveAt(this.AuthUserCombo.SelectedIndex);
@@ -69,7 +68,6 @@ namespace OpenTween.Setting.Panel
                     this.AuthUserCombo.SelectedIndex = -1;
                 }
             }
-            //this.Save.Enabled = false;
         }
     }
 }
